@@ -675,3 +675,69 @@ footer span { font-family: var(--font-mono), monospace; font-size: 12px; color: 
   .chatapp-list { border-right: none; border-bottom: 1px solid var(--line); max-height: 240px; }
   .chatapp-thread { max-height: 420px; }
 }
+
+/* ---- Admin: lead scoring + filters ---- */
+.lead-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+.lead-filters input,
+.lead-filters select,
+.field-row input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  color-scheme: dark;
+}
+.lead-filters input[type="search"] { flex: 1 1 200px; }
+.lead-filters input:focus,
+.lead-filters select:focus,
+.field-row input:focus { outline: none; border-color: var(--accent); }
+.inq-badges { display: inline-flex; gap: 6px; align-items: center; }
+.score-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.score-badge.hot { background: rgba(239, 68, 68, 0.18); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+.score-badge.warm { background: rgba(245, 158, 11, 0.16); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+.score-badge.cold { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.35); }
+.score-reason { font-size: 12px; opacity: 0.6; margin: 4px 0 2px; font-style: italic; }
+.status-select {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  color-scheme: dark;
+}
+.field-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.field-row input { flex: 1 1 260px; }
+.save-ok { color: #6ee7b7; font-size: 12.5px; }
+
+/* ---- Legal pages + footer links ---- */
+.legal-page { padding: 120px 0 80px; max-width: 860px; margin: 0 auto; }
+.legal-page h1 { font-family: var(--font-display); margin-bottom: 4px; }
+.legal-page h2 { font-family: var(--font-display); font-size: 20px; margin: 28px 0 8px; }
+.legal-page p, .legal-page li { font-size: 15px; line-height: 1.65; opacity: 0.85; }
+.legal-page ul { padding-left: 20px; display: grid; gap: 8px; }
+.legal-updated { opacity: 0.5; font-size: 13px; }
+.legal-page a { color: var(--accent-2); }
+.footer-links { display: inline-flex; gap: 14px; }
+.footer-links a { color: inherit; opacity: 0.7; }
+.footer-links a:hover { opacity: 1; }
+
+/* ---- FAQ ---- */
+.faq-list { display: grid; gap: 18px; max-width: 860px; }
+.faq-item h3 { font-family: var(--font-display); font-size: 17px; margin-bottom: 6px; }
+.faq-item p { font-size: 15px; line-height: 1.65; opacity: 0.8; }

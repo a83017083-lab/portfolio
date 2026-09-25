@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { kvLPushTrim } from "../../../lib/kv";
 import { Inquiry, sendOwnerMail, sendAutoReply, sendViaFormsubmit, mailConfigured } from "../../../lib/mail";
+import { scoreLead, fireLeadWebhook } from "../../../lib/leads";
 
 export async function POST(req: Request) {
   let body: Record<string, unknown>;
@@ -27,6 +28,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please fill all required fields correctly." }, { status: 400 });
   }
 
+  // score the lead (AI with rule-based fallback)
+  const lead = await scoreLead(projectType, budget, message);
+
   const inq: Inquiry = {
     id: crypto.randomUUID(),
     ts: Date.now(),
@@ -36,10 +40,16 @@ export async function POST(req: Request) {
     budget,
     message,
     read: false,
+    score: lead.score,
+    scoreReason: lead.reason,
+    status: "new",
   };
 
   // 1) archive for the admin panel (best effort)
   await kvLPushTrim("inquiries", inq, 200);
+
+  // 1b) hand off to his n8n workflow if a webhook is set (best effort)
+  await fireLeadWebhook({ ...inq, source: "portfolio-site" });
 
   // 2) notify: designed HTML mail via Gmail SMTP when configured, else Formsubmit
   let delivered = false;

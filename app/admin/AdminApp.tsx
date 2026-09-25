@@ -10,6 +10,8 @@ import type { SiteContent, ChatbotSettings } from "../../lib/content";
 type Inquiry = {
   id: string; ts: number; name: string; email: string;
   projectType: string; budget: string; message: string; read: boolean;
+  score?: "hot" | "warm" | "cold"; scoreReason?: string;
+  status?: "new" | "replied" | "won" | "lost";
 };
 
 type Tab = "overview" | "inquiries" | "content" | "chatbot";
@@ -186,13 +188,38 @@ function Inquiries({
   inquiries: Inquiry[] | null; storage: boolean; reload: () => Promise<void>;
 }) {
   const [busy, setBusy] = useState("");
+  const [fScore, setFScore] = useState("");
+  const [fService, setFService] = useState("");
+  const [fBudget, setFBudget] = useState("");
+  const [fStatus, setFStatus] = useState("");
+  const [fFrom, setFFrom] = useState("");
+  const [fTo, setFTo] = useState("");
+  const [q, setQ] = useState("");
+  const [webhook, setWebhook] = useState<string | null>(null);
+  const [whState, setWhState] = useState<"idle" | "saving" | "ok" | "err">("idle");
 
-  async function mark(id: string, read: boolean) {
+  useEffect(() => {
+    fetch("/api/admin/integrations").then((r) => r.json()).then((d) => {
+      if (typeof d.n8nWebhookUrl === "string") setWebhook(d.n8nWebhookUrl);
+    }).catch(() => setWebhook(""));
+  }, []);
+
+  async function saveWebhook() {
+    setWhState("saving");
+    const res = await fetch("/api/admin/integrations", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ n8nWebhookUrl: webhook || "" }),
+    });
+    setWhState(res.ok ? "ok" : "err");
+  }
+
+  async function patch(id: string, body: Record<string, unknown>) {
     setBusy(id);
     await fetch("/api/admin/inquiries", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, read }),
+      body: JSON.stringify({ id, ...body }),
     });
     await reload();
     setBusy("");
@@ -210,20 +237,91 @@ function Inquiries({
     setBusy("");
   }
 
+  const services = Array.from(new Set((inquiries || []).map((i) => i.projectType))).sort();
+  const budgets = Array.from(new Set((inquiries || []).map((i) => i.budget))).sort();
+  const filtered = (inquiries || []).filter((i) => {
+    if (fScore && i.score !== fScore) return false;
+    if (fService && i.projectType !== fService) return false;
+    if (fBudget && i.budget !== fBudget) return false;
+    if (fStatus && (i.status || "new") !== fStatus) return false;
+    if (fFrom && i.ts < new Date(fFrom).getTime()) return false;
+    if (fTo && i.ts > new Date(fTo).getTime() + 864e5 - 1) return false;
+    if (q) {
+      const hay = `${i.name} ${i.email} ${i.message} ${i.projectType}`.toLowerCase();
+      if (!hay.includes(q.toLowerCase())) return false;
+    }
+    return true;
+  });
+
   return (
     <>
       <h1>Inquiries</h1>
       <p className="page-sub">
-        Every form submission, newest first. They also arrive in your Gmail.
+        Every form submission, newest first, with AI lead score. They also arrive in your Gmail.
         {!storage && " (storage not connected - archive unavailable)"}
       </p>
+
+      <div className="admin-panel">
+        <h2>n8n webhook</h2>
+        <p className="hint">Every new lead is POSTed here as JSON (with its score) for your n8n follow-up automation. Leave empty to disable.</p>
+        <div className="field-row">
+          <input
+            type="url"
+            placeholder="https://your-n8n.host/webhook/…"
+            value={webhook ?? ""}
+            onChange={(e) => { setWebhook(e.target.value); setWhState("idle"); }}
+          />
+          <button className="admin-btn small" onClick={saveWebhook} disabled={whState === "saving" || webhook === null}>
+            {whState === "saving" ? "Saving…" : "Save"}
+          </button>
+          {whState === "ok" && <span className="save-ok">Saved</span>}
+          {whState === "err" && <span className="form-error">Could not save</span>}
+        </div>
+      </div>
+
+      <div className="lead-filters">
+        <input type="search" placeholder="Search name, email, message…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select value={fScore} onChange={(e) => setFScore(e.target.value)}>
+          <option value="">All scores</option>
+          <option value="hot">Hot</option>
+          <option value="warm">Warm</option>
+          <option value="cold">Cold</option>
+        </select>
+        <select value={fService} onChange={(e) => setFService(e.target.value)}>
+          <option value="">All services</option>
+          {services.map((sv) => <option key={sv} value={sv}>{sv}</option>)}
+        </select>
+        <select value={fBudget} onChange={(e) => setFBudget(e.target.value)}>
+          <option value="">All budgets</option>
+          {budgets.map((b) => <option key={b} value={b}>{b}</option>)}
+        </select>
+        <select value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
+          <option value="">All statuses</option>
+          <option value="new">New</option>
+          <option value="replied">Replied</option>
+          <option value="won">Won</option>
+          <option value="lost">Lost</option>
+        </select>
+        <input type="date" value={fFrom} onChange={(e) => setFFrom(e.target.value)} title="From date" />
+        <input type="date" value={fTo} onChange={(e) => setFTo(e.target.value)} title="To date" />
+        {(fScore || fService || fBudget || fStatus || fFrom || fTo || q) && (
+          <button className="admin-btn secondary small" onClick={() => { setFScore(""); setFService(""); setFBudget(""); setFStatus(""); setFFrom(""); setFTo(""); setQ(""); }}>
+            Clear
+          </button>
+        )}
+      </div>
+
       <div className="inq-list">
-        {(inquiries || []).map((i) => (
+        {filtered.map((i) => (
           <div className={`inq-item ${i.read ? "" : "unread"}`} key={i.id}>
             <div className="inq-head">
               <b>{i.name}</b>
-              <span className={`badge ${i.read ? "" : "new"}`}>{i.read ? i.projectType : "New"}</span>
+              <span className="inq-badges">
+                {i.score && <span className={`score-badge ${i.score}`}>{i.score.toUpperCase()}</span>}
+                <span className={`badge ${i.read ? "" : "new"}`}>{i.read ? i.projectType : "New"}</span>
+              </span>
             </div>
+            {i.scoreReason && <div className="score-reason">AI: {i.scoreReason}</div>}
             <div className="inq-meta">
               <a href={`mailto:${i.email}`}>{i.email}</a>
               <span>{i.projectType}</span>
@@ -235,7 +333,18 @@ function Inquiries({
               <a className="admin-btn small" href={`mailto:${i.email}?subject=Re: ${encodeURIComponent(i.projectType)} inquiry`}>
                 Reply
               </a>
-              <button className="admin-btn secondary small" disabled={busy === i.id} onClick={() => mark(i.id, !i.read)}>
+              <select
+                className="status-select"
+                value={i.status || "new"}
+                disabled={busy === i.id}
+                onChange={(e) => patch(i.id, { status: e.target.value, read: true })}
+              >
+                <option value="new">New</option>
+                <option value="replied">Replied</option>
+                <option value="won">Won</option>
+                <option value="lost">Lost</option>
+              </select>
+              <button className="admin-btn secondary small" disabled={busy === i.id} onClick={() => patch(i.id, { read: !i.read })}>
                 {i.read ? <><Mail size={13} /> Mark unread</> : <><MailOpen size={13} /> Mark read</>}
               </button>
               <button className="admin-btn danger small" disabled={busy === i.id} onClick={() => remove(i.id)}>
@@ -244,6 +353,9 @@ function Inquiries({
             </div>
           </div>
         ))}
+        {inquiries && filtered.length === 0 && inquiries.length > 0 && (
+          <p className="admin-empty">No inquiries match these filters.</p>
+        )}
         {inquiries && inquiries.length === 0 && (
           <p className="admin-empty">No inquiries yet. Share your site - they will land here and in your Gmail.</p>
         )}

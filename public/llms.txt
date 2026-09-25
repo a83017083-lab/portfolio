@@ -1,0 +1,25 @@
+# Build With Abhinav - Abhinav Kumar
+
+> Abhinav Kumar is a student builder and freelance web developer from New Delhi, India.
+> Under the name "Build With Abhinav" he builds business websites, AI automations,
+> n8n workflows, WhatsApp and Instagram automation, coaching-centre systems
+> (fee reminders, dashboards, parent-query AI) and short-form video editing.
+
+## About
+- Name: Abhinav Kumar
+- Agency: Build With Abhinav
+- Location: New Delhi, India (works remotely across India and abroad)
+- Contact: contact form or chatbot on the site
+
+## Services
+- Website development (Next.js, full-stack)
+- AI automation and n8n workflows
+- WhatsApp & Instagram automation
+- Coaching centre systems (fee reminders, dashboards, parent-query AI)
+- Short-form video editing (reels, shorts)
+
+## Links
+- Home: https://buildweth-abhinavk7852.vercel.app/
+- GitHub: https://github.com/a83017083-lab
+- Instagram: https://www.instagram.com/buildweth_abhinavk7852
+- Linktree: https://linktr.ee/buildweth_abhinavk7852

@@ -9,6 +9,9 @@ export type Inquiry = {
   budget: string;
   message: string;
   read: boolean;
+  score?: "hot" | "warm" | "cold";
+  scoreReason?: string;
+  status?: "new" | "replied" | "won" | "lost";
 };
 
 function esc(s: string) {

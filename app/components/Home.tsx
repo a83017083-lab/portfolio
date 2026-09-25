@@ -308,6 +308,42 @@ export default function Home({ content, chatbot }: { content: SiteContent; chatb
           </div>
         </section>
 
+        <section className="block" id="faq">
+          <Reveal>
+            <div className="block-head">
+              <span className="index">07</span>
+              <h2>FAQ</h2>
+              <span className="rule" />
+            </div>
+            <div className="faq-list">
+              <div className="faq-item">
+                <h3>Who is Abhinav Kumar?</h3>
+                <p>Abhinav Kumar is a student builder and freelance web developer from New Delhi, India, who ships websites, full-stack apps and AI automations in public under the name Build With Abhinav.</p>
+              </div>
+              <div className="faq-item">
+                <h3>What services does Build With Abhinav offer?</h3>
+                <p>Business websites, AI automations and n8n workflows, WhatsApp and Instagram automation, coaching-centre systems like fee reminders and parent-query AI, and short-form video editing for creators and brands.</p>
+              </div>
+              <div className="faq-item">
+                <h3>Where does Abhinav work?</h3>
+                <p>He is based in New Delhi, India and works remotely with clients across India and abroad.</p>
+              </div>
+              <div className="faq-item">
+                <h3>How much does a website or automation cost?</h3>
+                <p>It depends on the scope. Share your requirements through the contact form and you get a clear quote before any work starts.</p>
+              </div>
+              <div className="faq-item">
+                <h3>Does Abhinav build n8n automations and AI chatbots?</h3>
+                <p>Yes. n8n workflow automation, WhatsApp and Instagram automation, and AI assistants like the chatbot on this site are core services.</p>
+              </div>
+              <div className="faq-item">
+                <h3>How do I contact Abhinav?</h3>
+                <p>Use the contact form on this site or the chatbot. Every inquiry reaches him directly and gets a reply.</p>
+              </div>
+            </div>
+          </Reveal>
+        </section>
+
         <section id="contact">
           <Reveal>
             <div className="contact-card contact-form-card">
@@ -334,6 +370,10 @@ export default function Home({ content, chatbot }: { content: SiteContent; chatb
       <footer>
         <div className="wrap">
           <span>© 2026 Abhinav Kumar</span>
+          <span className="footer-links">
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+          </span>
           <span>Designed &amp; built with care</span>
         </div>
       </footer>

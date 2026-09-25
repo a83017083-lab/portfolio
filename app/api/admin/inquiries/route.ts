@@ -17,12 +17,16 @@ export async function GET() {
 export async function PATCH(req: Request) {
   if (!isAuthed()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => ({}));
-  const { id, read } = body as { id?: string; read?: boolean };
-  if (!id || typeof read !== "boolean") return NextResponse.json({ error: "Bad request" }, { status: 400 });
+  const { id, read, status } = body as { id?: string; read?: boolean; status?: string };
+  const okStatus = status === undefined || ["new", "replied", "won", "lost"].includes(status);
+  if (!id || (read !== undefined && typeof read !== "boolean") || !okStatus) {
+    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+  }
   const all = await readAll();
   const idx = all.findIndex((i) => i.id === id);
   if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  all[idx].read = read;
+  if (typeof read === "boolean") all[idx].read = read;
+  if (status) all[idx].status = status as Inquiry["status"];
   await kvLSet("inquiries", idx, all[idx]);
   return NextResponse.json({ ok: true });
 }
