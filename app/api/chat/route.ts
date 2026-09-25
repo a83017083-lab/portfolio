@@ -146,15 +146,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
 
-  const message = (body.message || "").trim().slice(0, 1000);
+  const message = typeof body?.message === "string" ? body.message.trim().slice(0, 1000) : "";
   if (!message) {
     return NextResponse.json({ error: "Empty message" }, { status: 400 });
   }
-  const history: ChatMsg[] = Array.isArray(body.history)
+  const history: ChatMsg[] = Array.isArray(body?.history)
     ? body.history
         .filter(
           (m) =>
-            (m.role === "user" || m.role === "assistant") &&
+            m && (m.role === "user" || m.role === "assistant") &&
             typeof m.content === "string"
         )
         .slice(-12)
@@ -170,6 +170,6 @@ export async function POST(req: Request) {
       { status: 502 }
     );
   }
-  await logChatExchange(body.sid, message, reply);
+  await logChatExchange(body?.sid, message, reply);
   return NextResponse.json({ reply });
 }

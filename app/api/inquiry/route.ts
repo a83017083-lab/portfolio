@@ -12,6 +12,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
 
+  if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({error:"Bad request"},{status:400});
+
   // honeypot: pretend success, store nothing
   if (typeof body.company === "string" && body.company) {
     return NextResponse.json({ ok: true });
