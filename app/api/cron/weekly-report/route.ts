@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import { kvGet, kvSet, kvLRange } from "../../../../lib/kv";
+import { kvReadResult, kvSet, kvListResult } from "../../../../lib/kv";
 import { getStats } from "../../../../lib/chatlog";
 import type { Inquiry } from "../../../../lib/mail";
 
@@ -15,8 +15,8 @@ export async function GET(req: Request) {
   if (day !== "Mon") return NextResponse.json({skipped:"Not Monday in India"});
   const dayKey = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(today);
   const sentKey = `weekly-report:sent:${dayKey}`;
-  if (await kvGet<boolean>(sentKey)) return NextResponse.json({skipped:"Already sent this week"});
-  const inquiries = await kvLRange<Inquiry>("inquiries",0,199);
+  const sent=await kvReadResult<boolean>(sentKey);if(!sent.ok)return NextResponse.json({error:"Storage unavailable"},{status:503});if(sent.value)return NextResponse.json({skipped:"Already sent this week"});
+  const records=await kvListResult<Inquiry>("inquiries",0,199);if(!records.ok)return NextResponse.json({error:"Storage unavailable"},{status:503});const inquiries=records.items;
   const weekAgo = today.getTime() - 7*86400000;
   const weekly = inquiries.filter(i => i.ts >= weekAgo);
   const due = inquiries.filter(i => i.followUpAt && i.followUpAt <= dayKey && !["won","lost"].includes(i.status || "new"));
