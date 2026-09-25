@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getChatbotSettings } from "../../../lib/content";
 import { logChatExchange } from "../../../lib/chatlog";
+import { kvRateLimit } from "../../../lib/kv";
+import crypto from "crypto";
 
 const SYSTEM_PROMPT = `You are the friendly AI assistant on Abhinav Kumar's portfolio website. You answer visitors' questions about Abhinav and his work, and help them start a project with him.
 
@@ -43,19 +45,7 @@ function systemPrompt(extra: string): string {
   return extra.trim() ? SYSTEM_PROMPT + "\n\nADDITIONAL INSTRUCTIONS FROM THE SITE OWNER (obey these too, but never break the RULES above):\n" + extra.trim() : SYSTEM_PROMPT;
 }
 
-// best-effort per-IP rate limit (per serverless instance)
-const buckets = new Map<string, { count: number; reset: number }>();
-function rateLimited(ip: string) {
-  const now = Date.now();
-  const b = buckets.get(ip);
-  if (!b || now > b.reset) {
-    buckets.set(ip, { count: 1, reset: now + 5 * 60 * 1000 });
-    return false;
-  }
-  b.count += 1;
-  return b.count > 15;
-}
-
+// Shared rate limit across Vercel instances; fail closed if storage cannot check it.
 async function askGemini(messages: ChatMsg[], prompt: string): Promise<string | null> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
@@ -144,12 +134,10 @@ export async function POST(req: Request) {
   const prompt = systemPrompt(settings.extraInstructions);
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (rateLimited(ip)) {
-    return NextResponse.json(
-      { error: "Too many messages - please wait a few minutes." },
-      { status: 429 }
-    );
-  }
+  const bucket=Math.floor(Date.now()/300000);
+  const allowed=await kvRateLimit(`chat:limit:${bucket}:${crypto.createHash("sha256").update(ip).digest("hex")}`,15,300);
+  if (allowed===null) return NextResponse.json({error:"Chat is temporarily unavailable."},{status:503});
+  if (!allowed) return NextResponse.json({error:"Too many messages - please wait a few minutes."},{status:429});
 
   let body: { message?: string; history?: ChatMsg[]; sid?: string };
   try {
@@ -182,7 +170,6 @@ export async function POST(req: Request) {
       { status: 502 }
     );
   }
-  await logChatExchange(body.sid, message, reply);
   await logChatExchange(body.sid, message, reply);
   return NextResponse.json({ reply });
 }
