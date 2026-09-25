@@ -8,6 +8,7 @@ import { getSid } from "../../lib/sid";
 const ChatWidget = dynamic(() => import("./ChatWidget"), { ssr: false });
 const SiteSearch = dynamic(() => import("./SiteSearch"), { ssr: false });
 const AccessibilityControls = dynamic(() => import("./AccessibilityControls"), { ssr:false });
+const ExitPrompt = dynamic(() => import("./ExitPrompt"), { ssr:false });
 import type { ChatbotSettings } from "../../lib/content";
 import PageTransitions from "./PageTransitions";
 import type {SearchEntry} from "../../lib/search-entries";
@@ -35,5 +36,6 @@ export function SiteChrome({ children, chatbot, announcement, whatsappUrl, searc
     <Link className="v2-mobile-cta" href="/contact#demo">Request a demo ↗</Link>
     <a className="v2-backtop" href="#top" aria-label="Back to top">↑</a>
     <ChatWidget greeting={chatbot.greeting} enabled={chatbot.enabled} />
+    <ExitPrompt/>
   </div>;
 }
