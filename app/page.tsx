@@ -115,22 +115,26 @@ export default function Home() {
                 <span className="dot" /> Available for projects
               </motion.span>
               <motion.h1 variants={fadeUp} custom={1} initial="hidden" animate="show">
-                I build websites
+                Abhinav
                 <br />
-                &amp; <span className="accent">AI automations</span>
-                <br />
-                that work.
+                Kumar<span className="accent">.</span>
               </motion.h1>
-              <motion.p className="sub" variants={fadeUp} custom={2} initial="hidden" animate="show">
-                I&apos;m <b>Abhinav Kumar</b>, a student builder from New Delhi. I learn by
-                shipping - full-stack apps, automation workflows and open-source tools, all
-                built in public.
+              <motion.p className="role" variants={fadeUp} custom={2} initial="hidden" animate="show">
+                I build <b>websites</b> &amp; <b>AI automations</b> that work.
               </motion.p>
-              <motion.div className="cta-row" variants={fadeUp} custom={3} initial="hidden" animate="show">
+              <motion.p className="sub" variants={fadeUp} custom={3} initial="hidden" animate="show">
+                Student builder from New Delhi. I learn by shipping - full-stack apps,
+                automation workflows and open-source tools, all built in public.
+              </motion.p>
+              <motion.div className="cta-row" variants={fadeUp} custom={4} initial="hidden" animate="show">
                 <a className="btn btn-primary" href="#work">See my work ↓</a>
-                <a className="btn btn-ghost" href={LINKS.github} target="_blank" rel="noopener noreferrer">
-                  GitHub ↗
-                </a>
+                <a className="btn btn-ghost" href={`mailto:${LINKS.email}`}>Email me →</a>
+              </motion.div>
+              <motion.div className="hero-socials" variants={fadeUp} custom={5} initial="hidden" animate="show">
+                <a href={LINKS.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+                <a href={LINKS.instagram} target="_blank" rel="noopener noreferrer">Instagram ↗</a>
+                <a href={LINKS.linktree} target="_blank" rel="noopener noreferrer">Linktree ↗</a>
+                <a href={LINKS.website} target="_blank" rel="noopener noreferrer">Blog ↗</a>
               </motion.div>
             </div>
             <motion.div
@@ -140,11 +144,25 @@ export default function Home() {
               transition={{ duration: 0.9, delay: 0.25, ease: [0.21, 0.47, 0.32, 0.98] }}
             >
               <motion.img
-                src="/images/hero.jpg"
-                alt="Abstract glowing sculpture"
+                src="/images/abhinav.jpg"
+                alt="Abhinav Kumar"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               />
+              <motion.div
+                className="float-chip chip-1"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+              >
+                <b>25+</b> repos on GitHub
+              </motion.div>
+              <motion.div
+                className="float-chip chip-2"
+                animate={{ y: [0, 9, 0] }}
+                transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+              >
+                n8n · Next.js · AI
+              </motion.div>
             </motion.div>
           </div>
         </header>

@@ -175,3 +175,41 @@ footer { border-top: 1px solid var(--line); padding: 26px 0 34px; }
 footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 footer span, footer a { font-family: var(--font-mono), monospace; font-size: 12px; color: var(--muted); text-decoration: none; }
 footer a:hover { color: var(--accent); }
+
+/* rich hero additions */
+.hero h1 .accent { color: var(--accent); }
+.hero p.role {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(19px, 2.6vw, 25px);
+  font-weight: 500; color: var(--muted);
+  margin-top: 14px;
+}
+.hero p.role b { color: var(--text); font-weight: 600; }
+.hero-socials { display: flex; gap: 22px; margin-top: 26px; flex-wrap: wrap; }
+.hero-socials a {
+  font-family: var(--font-mono), monospace; font-size: 12.5px;
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--line); padding-bottom: 2px;
+  transition: color .2s, border-color .2s;
+}
+.hero-socials a:hover { color: var(--accent); border-color: var(--accent); }
+.hero-art { position: relative; }
+.float-chip {
+  position: absolute;
+  background: rgba(23,23,29,.92);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px; color: var(--muted);
+  box-shadow: 0 14px 40px rgba(0,0,0,.5);
+  white-space: nowrap;
+}
+.float-chip b { color: var(--accent); font-size: 15px; margin-right: 4px; }
+.chip-1 { top: 8%; left: -28px; }
+.chip-2 { bottom: 9%; right: -18px; }
+@media (max-width: 860px) {
+  .chip-1 { left: 6px; }
+  .chip-2 { right: 6px; }
+}
