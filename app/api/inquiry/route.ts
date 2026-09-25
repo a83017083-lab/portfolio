@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   };
 
   // 1) archive for the admin panel (best effort)
-  await kvLPushTrim("inquiries", inq, 200);
+  const archived = await kvLPushTrim("inquiries", inq, 200);
 
   // 1b) hand off to his n8n workflow if a webhook is set (best effort)
   await fireLeadWebhook({ ...inq, source: "portfolio-site" });
@@ -62,6 +62,8 @@ export async function POST(req: Request) {
   }
 
   if (!delivered) {
+    // The inquiry is safe in the admin archive - don't tell the visitor it failed.
+    if (archived) return NextResponse.json({ ok: true });
     return NextResponse.json(
       { error: "Could not send right now - please email a83017083@gmail.com directly." },
       { status: 502 }
