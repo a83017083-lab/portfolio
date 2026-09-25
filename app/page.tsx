@@ -86,7 +86,6 @@ const LINKS = {
   github: "https://github.com/a83017083-lab",
   instagram: "https://www.instagram.com/buildweth_abhinavk7852",
   linktree: "https://linktr.ee/buildweth_abhinavk7852",
-  website: "https://www.buildwithabhinav.com",
   email: "a83017083@gmail.com",
 };
 
@@ -134,7 +133,6 @@ export default function Home() {
                 <a href={LINKS.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
                 <a href={LINKS.instagram} target="_blank" rel="noopener noreferrer">Instagram ↗</a>
                 <a href={LINKS.linktree} target="_blank" rel="noopener noreferrer">Linktree ↗</a>
-                <a href={LINKS.website} target="_blank" rel="noopener noreferrer">Blog ↗</a>
               </motion.div>
             </div>
             <motion.div
@@ -320,7 +318,6 @@ export default function Home() {
       <footer>
         <div className="wrap">
           <span>© 2026 Abhinav Kumar</span>
-          <a href={LINKS.website} target="_blank" rel="noopener noreferrer">buildwithabhinav.com ↗</a>
           <span>Designed &amp; built with care</span>
         </div>
       </footer>
