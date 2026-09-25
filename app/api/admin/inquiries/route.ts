@@ -1,7 +1,7 @@
 import {audit} from "../../../../lib/audit";
 import { NextResponse } from "next/server";
 import { isAuthed } from "../../../../lib/admin-guard";
-import { kvLRange, kvLSet, kvLRemIndex, kvConfigured } from "../../../../lib/kv";
+import { kvLRange, kvLSet, kvReplaceList, kvConfigured } from "../../../../lib/kv";
 import type { Inquiry } from "../../../../lib/mail";
 
 async function readAll(): Promise<Inquiry[]> {
@@ -31,7 +31,7 @@ export async function PATCH(req: Request) {
   if (notes !== undefined) all[idx].notes = notes;
   if (tags !== undefined) all[idx].tags = tags;
   if (followUpAt !== undefined) all[idx].followUpAt = followUpAt;
-  await kvLSet("inquiries", idx, all[idx]);
+  if(!await kvLSet("inquiries", idx, all[idx])) return NextResponse.json({error:"Storage unavailable"},{status:503});
   await audit("inquiry-update", `Lead ${id.slice(0,8)} updated (${status||"details"})`);
   return NextResponse.json({ ok: true });
 }
@@ -44,7 +44,7 @@ export async function DELETE(req: Request) {
   const all = await readAll();
   const idx = all.findIndex((i) => i.id === id);
   if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  await kvLRemIndex("inquiries", idx);
+  if(!await kvReplaceList("inquiries",all.filter(x=>x.id!==id))) return NextResponse.json({error:"Storage unavailable"},{status:503});
   await audit("inquiry-delete", `Lead ${id.slice(0,8)} deleted`);
   return NextResponse.json({ ok: true });
 }

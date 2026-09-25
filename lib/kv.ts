@@ -87,8 +87,7 @@ export async function kvSet(key: string, value: unknown): Promise<boolean> {
 export async function kvLPushTrim(key: string, value: unknown, max: number): Promise<boolean> {
   const r1 = await cmd<number>(["LPUSH", key, JSON.stringify(value)]);
   if (r1 == null) return false;
-  await cmd<string>(["LTRIM", key, 0, max - 1]);
-  return true;
+  return (await cmd<string>(["LTRIM", key, 0, max - 1])) === "OK";
 }
 
 export async function kvLRange<T>(key: string, start: number, stop: number): Promise<T[]> {
@@ -151,4 +150,22 @@ export async function kvRateLimit(key:string, max:number, windowSeconds:number):
   if(count===null)return null;
   if(count===1){const expiry=await cmd<number>(["EXPIRE",key,windowSeconds]);if(expiry===null)return null}
   return count<=max;
+}
+
+/** Read with an explicit success bit so privacy exports fail closed on Redis errors. */
+export async function kvReadResult<T>(key:string):Promise<{ok:boolean;value:T|null}>{
+ const r=await cmd<string|T>(["GET",key]);
+ if(r===null)return {ok:false,value:null};
+ if(typeof r==="string"){
+  try{return {ok:true,value:JSON.parse(r) as T}}catch{return {ok:true,value:r as unknown as T}}
+ }
+ return {ok:true,value:r as T};
+}
+
+export async function kvListResult<T>(key:string,start:number,stop:number):Promise<{ok:boolean;items:T[]}>{
+ const r=await cmd<string[]>(["LRANGE",key,start,stop]);
+ if(r===null)return {ok:false,items:[]};
+ const items:T[]=[];
+ for(const v of r){try{items.push(JSON.parse(v) as T)}catch{return {ok:false,items:[]}}}
+ return {ok:true,items};
 }

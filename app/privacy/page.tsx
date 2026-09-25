@@ -49,7 +49,7 @@ export default function Privacy() {
 
         <h2>What this site does not do</h2>
         <ul>
-          <li>No advertising trackers, no selling of personal information, no marketing lists.</li>
+          <li>No advertising trackers and no selling of personal information. The optional newsletter list is used only for project updates when the visitor opts in.</li>
           <li>Your details are not shared with anyone except the services needed to run the site
             (hosting on Vercel, a Redis database, Gmail for email, and AI providers that power the chatbot
             and lead scoring).</li>
