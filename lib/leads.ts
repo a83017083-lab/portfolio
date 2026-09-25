@@ -30,40 +30,44 @@ function ruleScore(projectType: string, budget: string, message: string): LeadAs
 async function jevScore(projectType: string, budget: string, message: string): Promise<LeadAssessment | null> {
   const key = process.env.JEV_API_KEY;
   if (!key) { console.log("jev: JEV_API_KEY not set"); return null; }
-  try {
-    const res = await fetch("https://jev-ai.pro/api/v1/systemone", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        state: `Service requested: ${projectType}\nBudget stated: ${budget}\nMessage: ${message}`,
-        model: "jev-latest",
-        questions: {
-          fit: {
-            type: "choice",
-            instructions: "How strong is this sales inquiry for a freelance web developer?",
-            criteria: {
-              hot: "Clear budget or strong buying intent; ready to hire soon",
-              warm: "Genuine inquiry but unqualified, early, or unclear budget",
-              cold: "Vague, freebie-seeking, spam, or not serious",
-            },
-          },
+  // Two Jev services expose the same typed API; the user's key may be from either.
+  const endpoints = ["https://jev-ai.pro/api/v1/systemone", "https://jev-agent.com/api/v1/systemone"];
+  const body = JSON.stringify({
+    state: `Service requested: ${projectType}\nBudget stated: ${budget}\nMessage: ${message}`,
+    model: "jev-latest",
+    questions: {
+      fit: {
+        type: "choice",
+        instructions: "How strong is this sales inquiry for a freelance web developer?",
+        criteria: {
+          hot: "Clear budget or strong buying intent; ready to hire soon",
+          warm: "Genuine inquiry but unqualified, early, or unclear budget",
+          cold: "Vague, freebie-seeking, spam, or not serious",
         },
-      }),
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) { console.log("jev: HTTP", res.status, (await res.text()).slice(0, 200)); return null; }
-    const data = await res.json();
-    const a = data?.answers?.fit;
-    const choice = a?.choice;
-    if (choice === "hot" || choice === "warm" || choice === "cold") {
-      const conf = typeof a?.confidence === "number" ? Math.round(a.confidence * 100) : null;
-      const probs = a?.probabilities ? ` (hot ${Math.round((a.probabilities.hot ?? 0) * 100)}%, warm ${Math.round((a.probabilities.warm ?? 0) * 100)}%, cold ${Math.round((a.probabilities.cold ?? 0) * 100)}%)` : "";
-      return { score: choice, reason: `Jev AI typed-decision score${conf !== null ? `, ${conf}% confidence` : ""}${probs}.`, scorer: "jev" };
+      },
+    },
+  });
+  for (const url of endpoints) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+        body,
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) { console.log("jev:", url, "HTTP", res.status, (await res.text()).slice(0, 160)); continue; }
+      const data = await res.json();
+      const a = data?.answers?.fit;
+      const choice = a?.choice;
+      if (choice === "hot" || choice === "warm" || choice === "cold") {
+        const conf = typeof a?.confidence === "number" ? Math.round(a.confidence * 100) : null;
+        return { score: choice, reason: `Jev AI typed-decision score${conf !== null ? `, ${conf}% confidence` : ""}.`, scorer: "jev" };
+      }
+      console.log("jev:", url, "unexpected answer shape");
+    } catch (e) {
+      console.log("jev:", url, "error", e instanceof Error ? e.message : e);
     }
-  } catch (e) {
-    console.log("jev: error", e instanceof Error ? e.message : e);
   }
-  console.log("jev: no usable answer");
   return null;
 }
 
