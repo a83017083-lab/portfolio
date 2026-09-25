@@ -1,18 +1,19 @@
 import {audit} from "../../../../lib/audit";
 import { NextResponse } from "next/server";
 import { isAuthed } from "../../../../lib/admin-guard";
-import { kvLRange, kvLSet, kvReplaceList, kvConfigured } from "../../../../lib/kv";
+import { kvListResult, kvLSet, kvReplaceList, kvConfigured } from "../../../../lib/kv";
 import type { Inquiry } from "../../../../lib/mail";
 
-async function readAll(): Promise<Inquiry[]> {
-  return kvLRange<Inquiry>("inquiries", 0, 199);
+async function readAll() {
+  return kvListResult<Inquiry>("inquiries", 0, 199);
 }
 
 export async function GET() {
   if (!isAuthed()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!kvConfigured()) return NextResponse.json({ inquiries: [], storage: false });
-  const inquiries = await readAll();
-  return NextResponse.json({ inquiries, storage: true });
+  const result = await readAll();
+  if(!result.ok)return NextResponse.json({error:"Storage unavailable",inquiries:[],storage:false},{status:503});
+  return NextResponse.json({ inquiries:result.items, storage:true },{headers:{"Cache-Control":"no-store"}});
 }
 
 export async function PATCH(req: Request) {
@@ -23,7 +24,7 @@ export async function PATCH(req: Request) {
   if (!id || (tags !== undefined && (!Array.isArray(tags)||tags.length>10||tags.some(t=>typeof t!=="string"||t.length>30))) || (read !== undefined && typeof read !== "boolean") || !okStatus || (notes !== undefined && (typeof notes !== "string" || notes.length > 2000)) || (followUpAt !== undefined && (typeof followUpAt !== "string" || (followUpAt !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(followUpAt))))) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
-  const all = await readAll();
+  const result=await readAll();if(!result.ok)return NextResponse.json({error:"Storage unavailable"},{status:503});const all=result.items;
   const idx = all.findIndex((i) => i.id === id);
   if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (typeof read === "boolean") all[idx].read = read;
@@ -41,7 +42,7 @@ export async function DELETE(req: Request) {
   const body = await req.json().catch(() => ({}));
   const { id } = body as { id?: string };
   if (!id) return NextResponse.json({ error: "Bad request" }, { status: 400 });
-  const all = await readAll();
+  const result=await readAll();if(!result.ok)return NextResponse.json({error:"Storage unavailable"},{status:503});const all=result.items;
   const idx = all.findIndex((i) => i.id === id);
   if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if(!await kvReplaceList("inquiries",all.filter(x=>x.id!==id))) return NextResponse.json({error:"Storage unavailable"},{status:503});
