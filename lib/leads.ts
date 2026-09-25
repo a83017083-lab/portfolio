@@ -6,6 +6,7 @@ export type LeadScore = "hot" | "warm" | "cold";
 export interface LeadAssessment {
   score: LeadScore;
   reason: string;
+  scorer?: "jev" | "gemini" | "openrouter" | "rules";
 }
 
 const HOT_WORDS = ["urgent", "asap", "immediately", "this week", "right away", "jaldi", "turant", "ready to pay", "budget approved", "hire", "start now"];
@@ -21,6 +22,48 @@ function ruleScore(projectType: string, budget: string, message: string): LeadAs
   if (hasMoney) return { score: "hot", reason: "Budget mentioned - serious buyer signal." };
   if (urgent) return { score: "warm", reason: "Urgent timeline but no budget mentioned." };
   return { score: "warm", reason: "Genuine inquiry, needs a conversation to qualify." };
+}
+
+
+// Jev AI (jev-ai.pro) typed-question scoring - primary when JEV_API_KEY is set.
+// Not OpenAI-compatible: POST {state, model, questions} -> typed answers.
+async function jevScore(projectType: string, budget: string, message: string): Promise<LeadAssessment | null> {
+  const key = process.env.JEV_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch("https://jev-ai.pro/api/v1/systemone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        state: `Service requested: ${projectType}\nBudget stated: ${budget}\nMessage: ${message}`,
+        model: "jev-latest",
+        questions: {
+          fit: {
+            type: "choice",
+            instructions: "How strong is this sales inquiry for a freelance web developer?",
+            criteria: {
+              hot: "Clear budget or strong buying intent; ready to hire soon",
+              warm: "Genuine inquiry but unqualified, early, or unclear budget",
+              cold: "Vague, freebie-seeking, spam, or not serious",
+            },
+          },
+        },
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const a = data?.answers?.fit;
+    const choice = a?.choice;
+    if (choice === "hot" || choice === "warm" || choice === "cold") {
+      const conf = typeof a?.confidence === "number" ? Math.round(a.confidence * 100) : null;
+      const probs = a?.probabilities ? ` (hot ${Math.round((a.probabilities.hot ?? 0) * 100)}%, warm ${Math.round((a.probabilities.warm ?? 0) * 100)}%, cold ${Math.round((a.probabilities.cold ?? 0) * 100)}%)` : "";
+      return { score: choice, reason: `Jev AI typed-decision score${conf !== null ? `, ${conf}% confidence` : ""}${probs}.`, scorer: "jev" };
+    }
+  } catch {
+    // fall through to Gemini/OpenRouter
+  }
+  return null;
 }
 
 async function aiScore(projectType: string, budget: string, message: string): Promise<LeadAssessment | null> {
@@ -45,7 +88,7 @@ async function aiScore(projectType: string, budget: string, message: string): Pr
         const data = await res.json();
         const text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("").trim();
         const parsed = parseScore(text);
-        if (parsed) return parsed;
+        if (parsed) return { ...parsed, scorer: "gemini" };
       } catch {
         // next model
       }
@@ -68,7 +111,7 @@ async function aiScore(projectType: string, budget: string, message: string): Pr
       if (res.ok) {
         const data = await res.json();
         const parsed = parseScore(data?.choices?.[0]?.message?.content?.trim());
-        if (parsed) return parsed;
+        if (parsed) return { ...parsed, scorer: "openrouter" };
       }
     } catch {
       // fall through
@@ -93,9 +136,11 @@ function parseScore(text: string | undefined | null): LeadAssessment | null {
 }
 
 export async function scoreLead(projectType: string, budget: string, message: string): Promise<LeadAssessment> {
+  const jev = await jevScore(projectType, budget, message);
+  if (jev) return jev;
   const ai = await aiScore(projectType, budget, message);
   if (ai) return ai;
-  return ruleScore(projectType, budget, message);
+  return { ...ruleScore(projectType, budget, message), scorer: "rules" };
 }
 
 // ---- n8n webhook integration setting ----

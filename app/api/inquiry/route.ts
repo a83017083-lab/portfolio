@@ -42,6 +42,7 @@ export async function POST(req: Request) {
     read: false,
     score: lead.score,
     scoreReason: lead.reason,
+    scorer: lead.scorer || "rules",
     status: "new",
   };
 

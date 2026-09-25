@@ -11,6 +11,7 @@ export type Inquiry = {
   read: boolean;
   score?: "hot" | "warm" | "cold";
   scoreReason?: string;
+  scorer?: string;
   status?: "new" | "replied" | "won" | "lost";
 };
 
