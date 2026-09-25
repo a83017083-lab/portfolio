@@ -12,7 +12,7 @@ import type { ChatbotSettings } from "../../lib/content";
 import PageTransitions from "./PageTransitions";
 import type {SearchEntry} from "../../lib/search-entries";
 
-const routes = [["/", "Home"], ["/about", "About"], ["/work", "Work"], ["/stack", "Stack"], ["/services", "Services"], ["/blog", "Journal"], ["/faq", "FAQ"], ["/contact", "Contact"]] as const;
+const routes = [["/", "Home"], ["/about", "About"], ["/work", "Work"], ["/stack", "Stack"], ["/services", "Services"], ["/blog", "Journal"], ["/faq", "FAQ"], ["/contact", "Contact"], ["/resources", "Resources"]] as const;
 export function SiteChrome({ children, chatbot, announcement, whatsappUrl, searchEntries }: { children: React.ReactNode; chatbot: ChatbotSettings; announcement?: string; whatsappUrl?: string; searchEntries: SearchEntry[] }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
