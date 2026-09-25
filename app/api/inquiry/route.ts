@@ -30,6 +30,7 @@ export async function POST(req: Request) {
 
   // score the lead (AI with rule-based fallback)
   const lead = await scoreLead(projectType, budget, message);
+  console.log("lead scored:", lead.scorer || "rules", lead.score);
 
   const inq: Inquiry = {
     id: crypto.randomUUID(),
