@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-export default function ShareLink({title}:{title?:string}) {
+export default function ShareLink({title,anchor}:{title?:string;anchor?:string}) {
   const [copied,setCopied]=useState(false);
   async function share() {
-    const url=window.location.href;
+    const url=anchor ? `${window.location.origin}${window.location.pathname}#${anchor}` : window.location.href;
     if(navigator.share) { try { await navigator.share({title:title||document.title,url}); return; } catch {} }
     await navigator.clipboard.writeText(url);setCopied(true);setTimeout(()=>setCopied(false),2000);
   }
