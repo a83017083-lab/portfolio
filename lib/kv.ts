@@ -21,7 +21,7 @@ async function getClient(): Promise<RedisClientType | null> {
   if (connecting) return connecting;
   connecting = (async () => {
     try {
-      const c = createClient({ url: REDIS_URL, socket: { connectTimeout: 4000 } });
+      const c = createClient({ url: REDIS_URL, socket: { connectTimeout: 4000, reconnectStrategy: false } });
       c.on("error", (e) => console.error("redis error", e));
       await c.connect();
       client = c as RedisClientType;
