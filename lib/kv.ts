@@ -153,13 +153,23 @@ export async function kvRateLimit(key:string, max:number, windowSeconds:number):
 }
 
 /** Read with an explicit success bit so privacy exports fail closed on Redis errors. */
+async function getWithStatus<T>(key:string):Promise<{ok:boolean;raw:string|T|null}>{
+ const c=await getClient();
+ if(c){try{return {ok:true,raw:(await c.sendCommand(["GET",key])) as string|T|null}}catch(e){console.error("redis read failed",e);return {ok:false,raw:null}}}
+ if(!REST_URL||!REST_TOKEN)return {ok:false,raw:null};
+ try{const res=await fetch(REST_URL,{method:"POST",headers:{Authorization:`Bearer ${REST_TOKEN}`,"Content-Type":"application/json"},body:JSON.stringify(["GET",key]),cache:"no-store"});
+  if(!res.ok)return {ok:false,raw:null};const data=await res.json() as {result?:string|T|null};return {ok:true,raw:data.result??null};
+ }catch(e){console.error("redis REST read failed",e);return {ok:false,raw:null}}
+}
 export async function kvReadResult<T>(key:string):Promise<{ok:boolean;value:T|null}>{
- const r=await cmd<string|T>(["GET",key]);
- if(r===null)return {ok:false,value:null};
- if(typeof r==="string"){
-  try{return {ok:true,value:JSON.parse(r) as T}}catch{return {ok:true,value:r as unknown as T}}
+ const result=await getWithStatus<T>(key);
+ if(!result.ok)return {ok:false,value:null};
+ const raw=result.raw;
+ if(raw===null)return {ok:true,value:null};
+ if(typeof raw==="string"){
+  try{return {ok:true,value:JSON.parse(raw) as T}}catch{return {ok:false,value:null}}
  }
- return {ok:true,value:r as T};
+ return {ok:true,value:raw as T};
 }
 
 export async function kvListResult<T>(key:string,start:number,stop:number):Promise<{ok:boolean;items:T[]}>{
