@@ -36,6 +36,9 @@ export default function Privacy() {
           </li>
         </ul>
 
+        <h2>Project reviews</h2>
+        <p>A review submission includes your name, email, project name, words and publication-consent choice. It is kept privately for verification and is not published automatically. Your email is not shown with a published review. Ask to withdraw it through the contact page or email.</p>
+
         <h2>Newsletter and client portal</h2>
         <p>Newsletter signups collect your email and a required consent choice. The list is stored privately; no automatic newsletter is currently sent. Ask through the contact page to be removed. A client project page, if your project has one, is protected by a private access code and shows only that project&apos;s status and updates.</p>
         <h2>How it is used</h2>
