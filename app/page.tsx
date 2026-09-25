@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import ChatWidget from "./components/ChatWidget";
+import InquiryForm from "./components/InquiryForm";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
@@ -99,6 +101,7 @@ export default function Home() {
           </a>
           <div className="links">
             <a href="#work">Work</a>
+            <a href="#services">Services</a>
             <a href="#about">About</a>
             <a href="#now">Now</a>
             <a href="#contact">Contact</a>
@@ -126,8 +129,8 @@ export default function Home() {
                 automation workflows and open-source tools, all built in public.
               </motion.p>
               <motion.div className="cta-row" variants={fadeUp} custom={4} initial="hidden" animate="show">
-                <a className="btn btn-primary" href="#work">See my work ↓</a>
-                <a className="btn btn-ghost" href={`mailto:${LINKS.email}`}>Email me →</a>
+                <a className="btn btn-primary" href="#contact">Start a project →</a>
+                <a className="btn btn-ghost" href="#work">See my work ↓</a>
               </motion.div>
               <motion.div className="hero-socials" variants={fadeUp} custom={5} initial="hidden" animate="show">
                 <a href={LINKS.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
@@ -211,10 +214,76 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="block" id="services">
+          <Reveal>
+            <div className="sec-head">
+              <span className="num">02 / SERVICES</span>
+              <h2>Start a project</h2>
+              <p>Websites and automations for real businesses - picked up, built properly, and looked after.</p>
+            </div>
+          </Reveal>
+          <div className="svc-grid">
+            {[
+              {
+                t: "Business websites",
+                d: "Fast, modern sites that make your business look serious - landing pages, full sites and redesigns that work on every phone.",
+                tags: ["Next.js", "Mobile-first", "SEO basics"],
+              },
+              {
+                t: "AI automations (n8n)",
+                d: "Workflows that do the boring work for you - data entry, follow-ups, reports and app integrations running on their own.",
+                tags: ["n8n", "APIs", "AI"],
+              },
+              {
+                t: "WhatsApp & Instagram automation",
+                d: "Auto-replies, keyword-triggered DMs and lead capture - your socials keep working even while you sleep.",
+                tags: ["Auto-replies", "Lead capture", "Dashboards"],
+              },
+              {
+                t: "Coaching centre systems",
+                d: "Fee reminders on WhatsApp, owner dashboards and AI that answers parent queries - the boring problems that cost real money.",
+                tags: ["Fee reminders", "Dashboards", "Parent queries"],
+              },
+            ].map((svc, i) => (
+              <Reveal key={svc.t} i={(i % 2) + 1}>
+                <div className="svc-card">
+                  <span className="svc-num">0{i + 1}</span>
+                  <h3>{svc.t}</h3>
+                  <p>{svc.d}</p>
+                  <div className="proj-tags">
+                    {svc.tags.map((t) => (
+                      <span key={t}>{t}</span>
+                    ))}
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal>
+            <div className="process">
+              <h3 className="process-title">How it works</h3>
+              <div className="process-grid">
+                {[
+                  { n: "01", t: "Tell me about it", d: "Fill the form below - takes two minutes." },
+                  { n: "02", t: "Plan & quote", d: "I reply within 24 hours with a clear plan, timeline and price." },
+                  { n: "03", t: "Build", d: "I build in weekly updates you can actually see, not silence." },
+                  { n: "04", t: "Launch & support", d: "We go live, and I stick around for fixes and tweaks." },
+                ].map((p) => (
+                  <div className="process-step" key={p.n}>
+                    <span className="mono">{p.n}</span>
+                    <h4>{p.t}</h4>
+                    <p>{p.d}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        </section>
+
         <section className="block" id="about">
           <Reveal>
             <div className="sec-head">
-              <span className="num">02 / ABOUT</span>
+              <span className="num">03 / ABOUT</span>
               <h2>Builder, not just student</h2>
             </div>
           </Reveal>
@@ -257,7 +326,7 @@ export default function Home() {
         <section className="block" id="now">
           <Reveal>
             <div className="sec-head">
-              <span className="num">03 / NOW</span>
+              <span className="num">04 / NOW</span>
               <h2>What I&apos;m up to</h2>
             </div>
           </Reveal>
@@ -293,22 +362,21 @@ export default function Home() {
 
         <section id="contact">
           <Reveal>
-            <div className="contact-card">
+            <div className="contact-card contact-form-card">
+              <span className="num">05 / START A PROJECT</span>
               <h2>
-                Got an idea? <span className="accent">Say hello.</span>
+                Tell me what you&apos;re <span className="accent">building.</span>
               </h2>
               <p>
-                A project, a collab, or a question about something I built - my inbox is open and
-                I read everything myself.
+                Fill this in and it lands straight in my inbox - I reply personally, usually
+                within 24 hours.
               </p>
-              <div className="cta-row">
-                <a className="btn btn-primary" href={`mailto:${LINKS.email}`}>Email me →</a>
-                <a className="btn btn-ghost" href={LINKS.instagram} target="_blank" rel="noopener noreferrer">
-                  Instagram ↗
-                </a>
-                <a className="btn btn-ghost" href={LINKS.linktree} target="_blank" rel="noopener noreferrer">
-                  Linktree ↗
-                </a>
+              <InquiryForm />
+              <div className="contact-alt">
+                <span>Prefer email or socials?</span>
+                <a href={`mailto:${LINKS.email}`}>{LINKS.email}</a>
+                <a href={LINKS.instagram} target="_blank" rel="noopener noreferrer">Instagram ↗</a>
+                <a href={LINKS.linktree} target="_blank" rel="noopener noreferrer">Linktree ↗</a>
               </div>
             </div>
           </Reveal>
@@ -321,6 +389,8 @@ export default function Home() {
           <span>Designed &amp; built with care</span>
         </div>
       </footer>
+
+      <ChatWidget />
     </main>
   );
 }
