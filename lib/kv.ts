@@ -144,6 +144,20 @@ export async function kvReplaceList(key:string,items:unknown[]):Promise<boolean>
   return true;
 }
 
+/** Update an inquiry by ID atomically, so a concurrent submission cannot shift its list index. */
+export async function kvPatchListRecord(key:string,id:string,patch:Record<string,unknown>):Promise<boolean|null>{
+ const lua=`local rows=redis.call('LRANGE',KEYS[1],0,-1); for i,raw in ipairs(rows) do local ok,row=pcall(cjson.decode,raw); if not ok or type(row)~='table' then return -1 end; if row.id==ARGV[1] then local changes=cjson.decode(ARGV[2]); for k,v in pairs(changes) do row[k]=v end; redis.call('LSET',KEYS[1],i-1,cjson.encode(row)); return 1 end end; return 0`;
+ const r=await cmd<number>(["EVAL",lua,1,key,id,JSON.stringify(patch)]);return r===null||r===-1?null:r===1;
+}
+
+/** Remove a list record by a stable string field in one Redis operation.
+ * Unlike read/DEL/rewrite, this cannot erase a concurrent submission.
+ */
+export async function kvRemoveListRecord(key:string,field:"id"|"email",value:string):Promise<boolean|null>{
+ const lua=`local rows=redis.call('LRANGE',KEYS[1],0,-1); local kept={}; local removed=0; for _,raw in ipairs(rows) do local ok,row=pcall(cjson.decode,raw); if not ok or type(row)~='table' then return -1 end; if row[ARGV[1]]==ARGV[2] then removed=removed+1 else table.insert(kept,raw) end end; if removed==0 then return 0 end; redis.call('DEL',KEYS[1]); if #kept>0 then redis.call('RPUSH',KEYS[1],unpack(kept)) end; return 1`;
+ const r=await cmd<number>(["EVAL",lua,1,key,field,value]);return r===null||r===-1?null:r===1;
+}
+
 /** Shared, fixed-window limiter. Returns null if the store is unavailable (fail closed). */
 export async function kvRateLimit(key:string, max:number, windowSeconds:number):Promise<boolean|null>{
   const count=await kvIncr(key);

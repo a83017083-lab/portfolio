@@ -1,7 +1,7 @@
 import {audit} from "../../../../lib/audit";
 import { NextResponse } from "next/server";
 import { isAuthed } from "../../../../lib/admin-guard";
-import { kvListResult, kvLSet, kvReplaceList, kvConfigured } from "../../../../lib/kv";
+import { kvListResult, kvPatchListRecord, kvRemoveListRecord, kvConfigured } from "../../../../lib/kv";
 import type { Inquiry } from "../../../../lib/mail";
 
 async function readAll() {
@@ -24,15 +24,15 @@ export async function PATCH(req: Request) {
   if (!id || (tags !== undefined && (!Array.isArray(tags)||tags.length>10||tags.some(t=>typeof t!=="string"||t.length>30))) || (read !== undefined && typeof read !== "boolean") || !okStatus || (notes !== undefined && (typeof notes !== "string" || notes.length > 2000)) || (followUpAt !== undefined && (typeof followUpAt !== "string" || (followUpAt !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(followUpAt))))) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
-  const result=await readAll();if(!result.ok)return NextResponse.json({error:"Storage unavailable"},{status:503});const all=result.items;
-  const idx = all.findIndex((i) => i.id === id);
-  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (typeof read === "boolean") all[idx].read = read;
-  if (status) all[idx].status = status as Inquiry["status"];
-  if (notes !== undefined) all[idx].notes = notes;
-  if (tags !== undefined) all[idx].tags = tags;
-  if (followUpAt !== undefined) all[idx].followUpAt = followUpAt;
-  if(!await kvLSet("inquiries", idx, all[idx])) return NextResponse.json({error:"Storage unavailable"},{status:503});
+  const patch: Record<string,unknown>={};
+  if(typeof read === "boolean")patch.read=read;
+  if(status)patch.status=status;
+  if(notes!==undefined)patch.notes=notes;
+  if(tags!==undefined)patch.tags=tags;
+  if(followUpAt!==undefined)patch.followUpAt=followUpAt;
+  const changed=await kvPatchListRecord("inquiries",id,patch);
+  if(changed===null)return NextResponse.json({error:"Storage unavailable"},{status:503});
+  if(!changed)return NextResponse.json({error:"Not found"},{status:404});
   await audit("inquiry-update", `Lead ${id.slice(0,8)} updated (${status||"details"})`);
   return NextResponse.json({ ok: true });
 }
@@ -42,10 +42,9 @@ export async function DELETE(req: Request) {
   const body = await req.json().catch(() => ({}));
   const { id } = body as { id?: string };
   if (!id) return NextResponse.json({ error: "Bad request" }, { status: 400 });
-  const result=await readAll();if(!result.ok)return NextResponse.json({error:"Storage unavailable"},{status:503});const all=result.items;
-  const idx = all.findIndex((i) => i.id === id);
-  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if(!await kvReplaceList("inquiries",all.filter(x=>x.id!==id))) return NextResponse.json({error:"Storage unavailable"},{status:503});
+  const removed=await kvRemoveListRecord("inquiries","id",id);
+  if(removed===null)return NextResponse.json({error:"Storage unavailable"},{status:503});
+  if(!removed)return NextResponse.json({error:"Not found"},{status:404});
   await audit("inquiry-delete", `Lead ${id.slice(0,8)} deleted`);
   return NextResponse.json({ ok: true });
 }
