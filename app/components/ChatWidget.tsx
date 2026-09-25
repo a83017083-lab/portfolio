@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MessageCircle, X, SendHorizonal, Sparkles } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const WELCOME =
-  "Hey! I'm the AI assistant on Abhinav's site. Ask me anything about his work, projects or services - or how to start a project with him.";
+const FALLBACK =
+  "Sorry, I'm having trouble right now. You can reach Abhinav directly at a83017083@gmail.com.";
 
-export default function ChatWidget() {
+export default function ChatWidget({ greeting, enabled }: { greeting: string; enabled: boolean }) {
   const [open, setOpen] = useState(false);
-  const [msgs, setMsgs] = useState<Msg[]>([{ role: "assistant", content: WELCOME }]);
+  const [msgs, setMsgs] = useState<Msg[]>([{ role: "assistant", content: greeting }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -17,6 +18,8 @@ export default function ChatWidget() {
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs, busy, open]);
+
+  if (!enabled) return null;
 
   async function send() {
     const text = input.trim();
@@ -35,24 +38,10 @@ export default function ChatWidget() {
       if (res.ok && data.reply) {
         setMsgs([...next, { role: "assistant", content: data.reply }]);
       } else {
-        setMsgs([
-          ...next,
-          {
-            role: "assistant",
-            content:
-              "Sorry, I'm having trouble right now. You can reach Abhinav directly at a83017083@gmail.com.",
-          },
-        ]);
+        setMsgs([...next, { role: "assistant", content: data.error || FALLBACK }]);
       }
     } catch {
-      setMsgs([
-        ...next,
-        {
-          role: "assistant",
-          content:
-            "Sorry, I'm having trouble right now. You can reach Abhinav directly at a83017083@gmail.com.",
-        },
-      ]);
+      setMsgs([...next, { role: "assistant", content: FALLBACK }]);
     } finally {
       setBusy(false);
     }
@@ -65,11 +54,12 @@ export default function ChatWidget() {
         onClick={() => setOpen(!open)}
         aria-label={open ? "Close chat" : "Open chat"}
       >
-        {open ? "✕" : "✦"}
+        {open ? <X size={22} /> : <MessageCircle size={23} />}
       </button>
       {open && (
-        <div className="chat-panel">
+        <div className="chat-panel" role="dialog" aria-label="Chat with AI assistant">
           <div className="chat-head">
+            <span className="chat-avatar"><Sparkles size={17} /></span>
             <div>
               <b>Ask me anything</b>
               <span>AI assistant · knows Abhinav&apos;s work</span>
@@ -93,7 +83,7 @@ export default function ChatWidget() {
               aria-label="Chat message"
             />
             <button onClick={send} disabled={busy || !input.trim()} aria-label="Send">
-              ➤
+              <SendHorizonal size={16} />
             </button>
           </div>
         </div>

@@ -38,23 +38,13 @@ export default function InquiryForm() {
     setState("sending");
     setError("");
     try {
-      const res = await fetch("https://formsubmit.co/ajax/74b4436968c5e3cace33c7040d07e091", {
+      const res = await fetch("/api/inquiry", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          _subject: `New project inquiry: ${payload.projectType} - ${payload.name}`,
-          _template: "table",
-          _captcha: "false",
-          _replyto: payload.email,
-          name: payload.name,
-          email: payload.email,
-          project_type: payload.projectType,
-          budget: payload.budget || "Not specified",
-          message: payload.message,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success === "true") {
+      if (res.ok && data.ok) {
         setState("done");
       } else {
         setError("Something went wrong - please email a83017083@gmail.com directly.");

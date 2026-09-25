@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getChatbotSettings } from "../../../lib/content";
 
 const SYSTEM_PROMPT = `You are the friendly AI assistant on Abhinav Kumar's portfolio website. You answer visitors' questions about Abhinav and his work, and help them start a project with him.
 
@@ -18,6 +19,9 @@ ABOUT ABHINAV (these are the ONLY facts you may share):
   2. AI automations with n8n - workflows that handle data entry, follow-ups, reports and integrations.
   3. WhatsApp & Instagram automation - auto-replies, keyword-triggered DMs, lead capture.
   4. Coaching-centre systems - fee reminders on WhatsApp, owner dashboards, and AI that answers parent queries.
+- Ventures:
+  1. Startup (early stage): a learning platform for students that combines study, real skills and sports - currently research and prototype stage, no launch date or claims beyond that.
+  2. Agency - "Build With Abhinav": the service side covering business websites, n8n AI automations, WhatsApp & Instagram automation, coaching-centre systems (fee reminders, dashboards, parent-query AI) and short-form video editing for creators and brands.
 - How starting a project works: fill the project form at the bottom of this site -> Abhinav replies within 24 hours with a plan and a custom quote -> he builds with weekly updates you can see -> launch, then ongoing support.
 - Contact: email a83017083@gmail.com, Instagram @buildweth_abhinavk7852, Linktree linktr.ee/buildweth_abhinavk7852, GitHub @a83017083-lab.
 
@@ -34,6 +38,10 @@ RULES:
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
+function systemPrompt(extra: string): string {
+  return extra.trim() ? SYSTEM_PROMPT + "\n\nADDITIONAL INSTRUCTIONS FROM THE SITE OWNER (obey these too, but never break the RULES above):\n" + extra.trim() : SYSTEM_PROMPT;
+}
+
 // best-effort per-IP rate limit (per serverless instance)
 const buckets = new Map<string, { count: number; reset: number }>();
 function rateLimited(ip: string) {
@@ -47,7 +55,7 @@ function rateLimited(ip: string) {
   return b.count > 15;
 }
 
-async function askGemini(messages: ChatMsg[]): Promise<string | null> {
+async function askGemini(messages: ChatMsg[], prompt: string): Promise<string | null> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
   const models = [
@@ -73,7 +81,7 @@ async function askGemini(messages: ChatMsg[]): Promise<string | null> {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            system_instruction: { parts: [{ text: prompt }] },
             contents,
             generationConfig: { temperature: 0.7, maxOutputTokens: 400 },
           }),
@@ -96,7 +104,7 @@ async function askGemini(messages: ChatMsg[]): Promise<string | null> {
   return null;
 }
 
-async function askOpenRouter(messages: ChatMsg[]): Promise<string | null> {
+async function askOpenRouter(messages: ChatMsg[], prompt: string): Promise<string | null> {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) return null;
   try {
@@ -110,7 +118,7 @@ async function askOpenRouter(messages: ChatMsg[]): Promise<string | null> {
       },
       body: JSON.stringify({
         model: process.env.OPENROUTER_MODEL || "openai/gpt-oss-20b:free",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        messages: [{ role: "system", content: prompt }, ...messages],
         max_tokens: 400,
         temperature: 0.7,
       }),
@@ -128,6 +136,11 @@ async function askOpenRouter(messages: ChatMsg[]): Promise<string | null> {
 }
 
 export async function POST(req: Request) {
+  const settings = await getChatbotSettings();
+  if (!settings.enabled) {
+    return NextResponse.json({ error: settings.disabledMessage }, { status: 503 });
+  }
+  const prompt = systemPrompt(settings.extraInstructions);
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (rateLimited(ip)) {
@@ -161,7 +174,7 @@ export async function POST(req: Request) {
 
   const messages = [...history, { role: "user" as const, content: message }];
 
-  const reply = (await askGemini(messages)) || (await askOpenRouter(messages));
+  const reply = (await askGemini(messages, prompt)) || (await askOpenRouter(messages, prompt));
   if (!reply) {
     return NextResponse.json(
       { error: "The assistant is unavailable right now." },
