@@ -14,13 +14,13 @@ export async function POST(req: Request) {
   if (!adminConfigured()) {
     return NextResponse.json({ error: "Admin is not configured yet." }, { status: 503 });
   }
-  let body: { password?: string };
+  let body: { password?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
-  if (!body.password || !checkPassword(body.password)) {
+  if (!body || !checkPassword(body.password)) {
     return NextResponse.json({ error: "Wrong password." }, { status: 401 });
   }
   const enrollment = await totpEnrollmentState();

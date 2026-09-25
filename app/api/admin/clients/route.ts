@@ -13,8 +13,8 @@ export async function GET(){
 }
 export async function POST(req:Request){
  if(!isAuthed())return NextResponse.json({error:"Unauthorized"},{status:401});
- const b=await req.json().catch(()=>({}));
- if(typeof b.name!=="string"||b.name.trim().length<2||b.name.length>100||typeof b.project!=="string"||b.project.trim().length<2||b.project.length>100)return NextResponse.json({error:"Name and project required"},{status:400});
+ const b=await req.json().catch(()=>null);
+ if(typeof b?.name!=="string"||b.name.trim().length<2||b.name.length>100||typeof b?.project!=="string"||b.project.trim().length<2||b.project.length>100)return NextResponse.json({error:"Name and project required"},{status:400});
  const code=crypto.randomBytes(24).toString("base64url");
  const record={id:crypto.randomUUID(),name:b.name.trim(),project:b.project.trim(),status:"Planning",update:"No update yet.",createdAt:Date.now(),tokenHash:tokenHash(code)};
  const added=await addClient(record);
@@ -25,8 +25,8 @@ export async function POST(req:Request){
 }
 export async function PATCH(req:Request){
  if(!isAuthed())return NextResponse.json({error:"Unauthorized"},{status:401});
- const b=await req.json().catch(()=>({}));
- if(typeof b.id!=="string"||typeof b.status!=="string"||typeof b.update!=="string"||b.status.length>80||b.update.length>1000)return NextResponse.json({error:"Bad input"},{status:400});
+ const b=await req.json().catch(()=>null);
+ if(typeof b?.id!=="string"||typeof b?.status!=="string"||typeof b?.update!=="string"||b.status.length>80||b.update.length>1000)return NextResponse.json({error:"Bad input"},{status:400});
  const changed=await kvJsonClientMutate(KEY,b.id,"update",b.status,b.update);
  if(changed===null)return NextResponse.json({error:"Storage unavailable"},{status:503});
  if(!changed)return NextResponse.json({error:"Not found"},{status:404});
@@ -35,7 +35,7 @@ export async function PATCH(req:Request){
 }
 export async function DELETE(req:Request){
  if(!isAuthed())return NextResponse.json({error:"Unauthorized"},{status:401});
- const {id}=await req.json().catch(()=>({}));if(typeof id!=="string")return NextResponse.json({error:"Bad input"},{status:400});
+ const body=await req.json().catch(()=>null);const id=body?.id;if(typeof id!=="string")return NextResponse.json({error:"Bad input"},{status:400});
  const changed=await kvJsonClientMutate(KEY,id,"delete");
  if(changed===null)return NextResponse.json({error:"Storage unavailable"},{status:503});
  if(!changed)return NextResponse.json({error:"Not found"},{status:404});

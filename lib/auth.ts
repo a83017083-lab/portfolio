@@ -45,9 +45,9 @@ export function verifySession(token: string | undefined | null): boolean {
   return sessionStage(token) === "full";
 }
 
-export function checkPassword(candidate: string): boolean {
+export function checkPassword(candidate: unknown): boolean {
   const s = secret();
-  if (!s) return false;
+  if (!s || typeof candidate !== "string") return false;
   const a = Buffer.from(candidate);
   const b = Buffer.from(s);
   return a.length === b.length && crypto.timingSafeEqual(a, b);

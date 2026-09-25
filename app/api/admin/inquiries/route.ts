@@ -18,10 +18,10 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   if (!isAuthed()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = await req.json().catch(() => ({}));
-  const { id, read, status, notes, followUpAt, tags } = body as { id?: string; read?: boolean; status?: string; notes?: string; followUpAt?: string; tags?: string[] };
+  const body = await req.json().catch(() => null);
+  const { id, read, status, notes, followUpAt, tags } = (body || {}) as { id?: string; read?: boolean; status?: string; notes?: string; followUpAt?: string; tags?: string[] };
   const okStatus = status === undefined || ["new", "replied", "won", "lost"].includes(status);
-  if (!id || (tags !== undefined && (!Array.isArray(tags)||tags.length>10||tags.some(t=>typeof t!=="string"||t.length>30))) || (read !== undefined && typeof read !== "boolean") || !okStatus || (notes !== undefined && (typeof notes !== "string" || notes.length > 2000)) || (followUpAt !== undefined && (typeof followUpAt !== "string" || (followUpAt !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(followUpAt))))) {
+  if (typeof id !== "string" || !id || (tags !== undefined && (!Array.isArray(tags)||tags.length>10||tags.some(t=>typeof t!=="string"||t.length>30))) || (read !== undefined && typeof read !== "boolean") || !okStatus || (notes !== undefined && (typeof notes !== "string" || notes.length > 2000)) || (followUpAt !== undefined && (typeof followUpAt !== "string" || (followUpAt !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(followUpAt))))) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
   const patch: Record<string,unknown>={};
@@ -39,9 +39,9 @@ export async function PATCH(req: Request) {
 
 export async function DELETE(req: Request) {
   if (!isAuthed()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = await req.json().catch(() => ({}));
-  const { id } = body as { id?: string };
-  if (!id) return NextResponse.json({ error: "Bad request" }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const { id } = (body || {}) as { id?: string };
+  if (typeof id !== "string" || !id) return NextResponse.json({ error: "Bad request" }, { status: 400 });
   const removed=await kvRemoveListRecord("inquiries","id",id);
   if(removed===null)return NextResponse.json({error:"Storage unavailable"},{status:503});
   if(!removed)return NextResponse.json({error:"Not found"},{status:404});

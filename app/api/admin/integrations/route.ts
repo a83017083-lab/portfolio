@@ -11,8 +11,9 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   if (!isAuthed()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = await req.json().catch(() => ({}));
-  const url = typeof body.n8nWebhookUrl === "string" ? body.n8nWebhookUrl.trim() : "";
+  const body = await req.json().catch(() => null);
+  if(typeof body?.n8nWebhookUrl !== "string")return NextResponse.json({error:"Webhook URL must be a string"},{status:400});
+  const url = body.n8nWebhookUrl.trim();
   if (url && !/^https:\/\//.test(url)) {
     return NextResponse.json({ error: "Webhook URL must start with https://" }, { status: 400 });
   }
