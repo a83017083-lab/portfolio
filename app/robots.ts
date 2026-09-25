@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: AGENTS.map((userAgent) => ({
       userAgent,
       allow: "/",
-      disallow: ["/admin", "/api"],
+      disallow: ["/admin", "/api", "/client"],
     })),
     sitemap: "https://buildweth-abhinavk7852.vercel.app/sitemap.xml",
   };
