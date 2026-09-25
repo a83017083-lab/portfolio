@@ -310,10 +310,8 @@ export default function Home({ content, chatbot }: { content: SiteContent; chatb
 
         <section className="block" id="faq">
           <Reveal>
-            <div className="block-head">
-              <span className="index">07</span>
-              <h2>FAQ</h2>
-              <span className="rule" />
+            <div className="sec-head">
+              <span className="num">06 / FAQ</span>
             </div>
             <div className="faq-list">
               <div className="faq-item">
@@ -347,7 +345,7 @@ export default function Home({ content, chatbot }: { content: SiteContent; chatb
         <section id="contact">
           <Reveal>
             <div className="contact-card contact-form-card">
-              <span className="num">06 / Start a project</span>
+              <span className="num">07 / Start a project</span>
               <h2>
                 Tell me what you&apos;re <span className="accent">building.</span>
               </h2>
