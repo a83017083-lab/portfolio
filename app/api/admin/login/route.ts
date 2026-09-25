@@ -1,24 +1,16 @@
 import { NextResponse } from "next/server";
 import { checkPassword, signSession, adminConfigured, SESSION_COOKIE, SESSION_MAX_AGE } from "../../../../lib/auth";
-import { totpEnrolled } from "../../../../lib/totp";
+import { totpEnrollmentState } from "../../../../lib/totp";
 
-const buckets = new Map<string, { count: number; reset: number }>();
-function limited(ip: string) {
-  const now = Date.now();
-  const b = buckets.get(ip);
-  if (!b || now > b.reset) {
-    buckets.set(ip, { count: 1, reset: now + 10 * 60 * 1000 });
-    return false;
-  }
-  b.count += 1;
-  return b.count > 10;
-}
-
+import crypto from "crypto";
+import {kvRateLimit} from "../../../../lib/kv";
+/* Shared rate limit keeps guesses bounded across serverless instances. */
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (limited(ip)) {
-    return NextResponse.json({ error: "Too many attempts - wait a few minutes." }, { status: 429 });
-  }
+  const key=`admin:login:limit:${Math.floor(Date.now()/600000)}:${crypto.createHash("sha256").update(ip).digest("hex")}`;
+  const allowed=await kvRateLimit(key,10,600);
+  if(allowed===null)return NextResponse.json({error:"Admin storage unavailable"},{status:503});
+  if(!allowed)return NextResponse.json({error:"Too many attempts - wait a few minutes."},{status:429});
   if (!adminConfigured()) {
     return NextResponse.json({ error: "Admin is not configured yet." }, { status: 503 });
   }
@@ -31,8 +23,9 @@ export async function POST(req: Request) {
   if (!body.password || !checkPassword(body.password)) {
     return NextResponse.json({ error: "Wrong password." }, { status: 401 });
   }
-  const enrolled = await totpEnrolled();
-  if (enrolled) {
+  const enrollment = await totpEnrollmentState();
+  if (!enrollment.ok) return NextResponse.json({error:"Admin storage unavailable"},{status:503});
+  if (enrollment.record) {
     // Password OK - second factor still needed.
     const res = NextResponse.json({ ok: true, needTotp: true });
     res.cookies.set(SESSION_COOKIE, signSession("pre", 10 * 60 * 1000), {
