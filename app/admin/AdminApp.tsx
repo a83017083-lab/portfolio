@@ -10,6 +10,7 @@ import AdminTheme from "../components/AdminTheme";
 import FollowupCalendar from "./FollowupCalendar";
 import ReplyTemplate from "./ReplyTemplate";
 import SeoChecker from "./SeoChecker";
+import {reviewSignals} from "../../lib/spam";
 
 type Inquiry = {
   id: string; ts: number; name: string; email: string;
@@ -365,7 +366,7 @@ function Inquiries({
               </span>
             </div>
             {i.scoreReason && <div className="score-reason">AI: {i.scoreReason}</div>}
-            {i.message.length < 25 && <div className="score-reason" style={{color:"#fbbf24"}}>Review manually: short message may be spam or incomplete.</div>}
+            {reviewSignals(i).length>0&&<div className="score-reason" style={{color:"#fbbf24"}}>Review manually: {reviewSignals(i).join(" · ")}. These are hints, not a spam verdict.</div>}
             <div className="inq-meta">
               <a href={`mailto:${i.email}`}>{i.email}</a>
               <span>{i.projectType}</span>
