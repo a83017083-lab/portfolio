@@ -13,7 +13,7 @@ async function inspect(path:string):Promise<Finding>{
  const issues:string[]=[];
  if(!title)issues.push("Missing title");else if(title.length>70)issues.push(`Long title (${title.length} characters)`);
  if(!description)issues.push("Missing description");else if(description.length>165)issues.push(`Long description (${description.length} characters)`);
- if(!canonical)issues.push("Missing canonical URL");else if(canonical!==url)issues.push("Canonical differs from this page URL");
+ if(!canonical)issues.push("Missing canonical URL");else if(canonical.replace(/\/$/,"")!==url.replace(/\/$/,""))issues.push("Canonical differs from this page URL");
  if(!h1)issues.push("Missing H1");
  if(!ogTitle)issues.push("Missing Open Graph title");
  if(/noindex/i.test(robots))issues.push("Marked noindex");
