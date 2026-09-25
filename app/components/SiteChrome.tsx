@@ -23,7 +23,7 @@ export function SiteChrome({ children, chatbot, announcement, whatsappUrl, searc
   return <div id="top" className={dark ? "v2-shell v2-dark" : "v2-shell"}>
     {announcement && <div className="v2-announcement">{announcement}</div>}
     <div className="v2-progress" aria-hidden="true"/><header className="v2-header"><div className="v2-header-inner">
-      <Link href="/" className="v2-logo" aria-label="Build With Abhinav, home"><span className="v2-logomark">a.</span><span>build with<br/><strong>abhinav</strong></span></Link>
+      <Link href="/" className="v2-logo" aria-label="Build With Abhinav, home"><span className="v2-logomark"><img src="/images/abhinav.jpg" alt="" width="42" height="42"/></span><span>build with<br/><strong>abhinav</strong></span></Link>
       <SiteSearch entries={searchEntries}/><AccessibilityControls/>
       <button className="v2-theme-toggle" type="button" onClick={toggleTheme} aria-label={dark ? "Switch to light theme" : "Switch to dark theme"} title={dark ? "Light theme" : "Dark theme"}>{dark ? "☀ Light" : "☾ Dark"}</button>
       <button className="v2-menu" aria-expanded={open} aria-label="Toggle menu" onClick={() => setOpen(!open)}>{open ? "Close ×" : "Menu +"}</button>
