@@ -48,17 +48,19 @@ export default function AdminApp() {
   const [tab, setTab] = useState<Tab>("overview");
   const [inquiries, setInquiries] = useState<Inquiry[] | null>(null);
   const [storage, setStorage] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [content, setContent] = useState<SiteContent | null>(null);
   const [settings, setSettings] = useState<ChatbotSettings | null>(null);
   const router = useRouter();
 
   const loadInquiries = useCallback(async () => {
-    const res = await fetch("/api/admin/inquiries");
-    if (res.ok) {
+    try {
+      const res = await fetch("/api/admin/inquiries", {cache:"no-store"});
       const d = await res.json();
-      setInquiries(d.inquiries);
-      setStorage(d.storage);
-    }
+      if (!res.ok) throw new Error(d.error || "Could not load inquiries");
+      setInquiries(d.inquiries); setStorage(d.storage);
+      setLoadError(d.storage ? "" : "Archive storage is not connected. Inquiries cannot be shown here.");
+    } catch (e) { setInquiries(null); setStorage(false); setLoadError(e instanceof Error ? e.message : "Could not load inquiries"); }
   }, []);
 
   const loadContent = useCallback(async () => {
@@ -118,11 +120,12 @@ export default function AdminApp() {
         </button>
       </aside>
       <main className="admin-main">
+        {loadError && <div className="admin-panel" role="alert"><strong>Inquiries unavailable</strong><p>{loadError}</p><button className="admin-btn secondary small" type="button" onClick={loadInquiries}>Retry loading</button></div>}
         {tab === "overview" && (
           <Overview inquiries={inquiries} unread={unread} storage={storage} settings={settings} go={setTab} />
         )}
         {tab === "inquiries" && (
-          <Inquiries inquiries={inquiries} storage={storage} reload={loadInquiries} />
+          <Inquiries inquiries={inquiries} storage={storage} reload={loadInquiries} reportError={setLoadError} />
         )}
         {tab === "pipeline" && <Pipeline inquiries={inquiries} reload={loadInquiries} />}
         {tab === "followups" && <FollowupCalendar inquiries={inquiries}/>}
@@ -224,9 +227,9 @@ function Overview({
 }
 
 function Inquiries({
-  inquiries, storage, reload,
+  inquiries, storage, reload, reportError,
 }: {
-  inquiries: Inquiry[] | null; storage: boolean; reload: () => Promise<void>;
+  inquiries: Inquiry[] | null; storage: boolean; reload: () => Promise<void>; reportError: (message:string)=>void;
 }) {
   const [busy, setBusy] = useState("");
   const [fScore, setFScore] = useState("");
@@ -259,25 +262,29 @@ function Inquiries({
 
   async function patch(id: string, body: Record<string, unknown>) {
     setBusy(id);
-    await fetch("/api/admin/inquiries", {
+    reportError("");
+    try { const res = await fetch("/api/admin/inquiries", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, ...body }),
     });
+    if(!res.ok)throw new Error((await res.json()).error || "Could not update inquiry");
     await reload();
-    setBusy("");
+    } catch(e){reportError(e instanceof Error?e.message:"Could not update inquiry")} finally {setBusy("")}
   }
 
   async function remove(id: string) {
     if (!confirm("Delete this inquiry permanently?")) return;
     setBusy(id);
-    await fetch("/api/admin/inquiries", {
+    reportError("");
+    try { const res = await fetch("/api/admin/inquiries", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
+    if(!res.ok)throw new Error((await res.json()).error || "Could not delete inquiry");
     await reload();
-    setBusy("");
+    } catch(e){reportError(e instanceof Error?e.message:"Could not delete inquiry")} finally {setBusy("")}
   }
 
   const services = Array.from(new Set((inquiries || []).map((i) => i.projectType))).sort();
@@ -324,7 +331,7 @@ function Inquiries({
         </div>
       </div>
 
-      <div className="lead-filters"><button className="admin-btn secondary small" onClick={() => {
+      <div className="lead-filters"><button className="admin-btn secondary small" disabled={!storage||!inquiries} onClick={() => {
         const quote = (x: unknown) => { const value = String(x ?? ""); const safe = /^[=+@\-\t\r]/.test(value) ? "\u0027" + value : value; return `"${safe.replace(/"/g, '""')}"`; };
         const rows = [["Date", "Name", "Email", "Service", "Budget", "Score", "Status", "Follow up", "Notes", "Message"], ...(inquiries || []).map(i => [new Date(i.ts).toISOString(),i.name,i.email,i.projectType,i.budget,i.score || "",i.status || "new",i.followUpAt || "",i.notes || "",i.message])];
         const csv = rows.map(row => row.map(quote).join(",")).join("\r\n");
