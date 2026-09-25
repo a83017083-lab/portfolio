@@ -1,5 +1,5 @@
 // Lead scoring: AI first (existing free Gemini/OpenRouter keys), rule-based fallback.
-import { kvGet, kvSet } from "./kv";
+import { kvReadResult, kvSet } from "./kv";
 
 export type LeadScore = "hot" | "warm" | "cold";
 
@@ -151,18 +151,19 @@ export async function scoreLead(projectType: string, budget: string, message: st
 // ---- n8n webhook integration setting ----
 const INT_KEY = "integrations:v1";
 
-export async function getWebhookUrl(): Promise<string> {
-  const rec = await kvGet<{ n8nWebhookUrl?: string }>(INT_KEY);
-  return rec?.n8nWebhookUrl || "";
+export async function getWebhookSetting(): Promise<{ok:boolean;url:string}> {
+  const rec = await kvReadResult<{n8nWebhookUrl?:string}>(INT_KEY);
+  return {ok:rec.ok,url:rec.value?.n8nWebhookUrl || ""};
 }
 
-export async function setWebhookUrl(url: string): Promise<void> {
-  await kvSet(INT_KEY, { n8nWebhookUrl: url });
+export async function setWebhookUrl(url: string): Promise<boolean> {
+  return kvSet(INT_KEY, { n8nWebhookUrl: url });
 }
 
 export async function fireLeadWebhook(payload: unknown): Promise<void> {
-  const url = await getWebhookUrl();
-  if (!url || !/^https:\/\//.test(url)) return;
+  const setting = await getWebhookSetting();
+  const url = setting.url;
+  if (!setting.ok || !url || !/^https:\/\//.test(url)) return;
   try {
     await fetch(url, {
       method: "POST",

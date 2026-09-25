@@ -247,7 +247,8 @@ function Inquiries({
   useEffect(() => {
     fetch("/api/admin/integrations").then((r) => r.json()).then((d) => {
       if (typeof d.n8nWebhookUrl === "string") setWebhook(d.n8nWebhookUrl);
-    }).catch(() => setWebhook(""));
+      else setWhState("err");
+    }).catch(() => setWhState("err"));
   }, []);
 
   async function saveWebhook() {

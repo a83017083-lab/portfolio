@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { isAuthed } from "../../../../lib/admin-guard";
-import { getWebhookUrl, setWebhookUrl } from "../../../../lib/leads";
+import { getWebhookSetting, setWebhookUrl } from "../../../../lib/leads";
 
 export async function GET() {
   if (!isAuthed()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return NextResponse.json({ n8nWebhookUrl: await getWebhookUrl() });
+  const setting=await getWebhookSetting();
+  if(!setting.ok)return NextResponse.json({error:"Storage unavailable"},{status:503});
+  return NextResponse.json({n8nWebhookUrl:setting.url},{headers:{"Cache-Control":"no-store"}});
 }
 
 export async function PUT(req: Request) {
@@ -14,6 +16,6 @@ export async function PUT(req: Request) {
   if (url && !/^https:\/\//.test(url)) {
     return NextResponse.json({ error: "Webhook URL must start with https://" }, { status: 400 });
   }
-  await setWebhookUrl(url);
+  if(!await setWebhookUrl(url))return NextResponse.json({error:"Storage unavailable"},{status:503});
   return NextResponse.json({ ok: true });
 }
