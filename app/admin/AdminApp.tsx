@@ -8,6 +8,7 @@ import {
 import type { SiteContent, ChatbotSettings } from "../../lib/content";
 import AdminTheme from "../components/AdminTheme";
 import FollowupCalendar from "./FollowupCalendar";
+import ReplyTemplate from "./ReplyTemplate";
 
 type Inquiry = {
   id: string; ts: number; name: string; email: string;
@@ -375,9 +376,7 @@ function Inquiries({
               <label className="admin-field"><span>Follow-up date (shown in admin when due)</span><input type="date" value={i.followUpAt || ""} onChange={e => patch(i.id, { followUpAt: e.target.value })} /></label>
             </div>
             <div className="inq-actions">
-              <a className="admin-btn small" href={`mailto:${i.email}?subject=Re: ${encodeURIComponent(i.projectType)} inquiry`}>
-                Reply
-              </a>
+              <ReplyTemplate inquiry={i}/>
               <select
                 className="status-select"
                 value={i.status || "new"}
