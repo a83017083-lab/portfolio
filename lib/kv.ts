@@ -134,3 +134,13 @@ export async function kvSCard(key: string): Promise<number> {
   const r = await cmd<number>(["SCARD", key]);
   return r ?? 0;
 }
+
+/** Replace a bounded list in one Redis command, used for private admin record deletion. */
+export async function kvReplaceList(key:string,items:unknown[]):Promise<boolean>{
+  const c=await getClient();
+  if(c){try{const multi=c.multi().del(key);if(items.length)multi.rPush(key,items.map(x=>JSON.stringify(x)));await multi.exec();return true}catch(e){console.error("redis list replace failed",e);return false}}
+  if(!REST_URL||!REST_TOKEN)return false;
+  const deleted=await cmd<number>(["DEL",key]);if(deleted===null)return false;
+  for(const item of items){if(await cmd<number>(["RPUSH",key,JSON.stringify(item)])===null)return false}
+  return true;
+}

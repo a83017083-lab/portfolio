@@ -1,0 +1,7 @@
+import { NextResponse } from "next/server";
+import { isAuthed } from "../../../../lib/admin-guard";
+import { kvLRange,kvSet } from "../../../../lib/kv";
+import crypto from "crypto";
+type Subscriber={email:string;joinedAt:number;consent:boolean};
+export async function GET(){if(!isAuthed())return NextResponse.json({error:"Unauthorized"},{status:401});const all=await kvLRange<Subscriber>("newsletter:subscribers",0,1999);return NextResponse.json({subscribers:all});}
+export async function DELETE(req:Request){if(!isAuthed())return NextResponse.json({error:"Unauthorized"},{status:401});const {email}=await req.json().catch(()=>({}));if(typeof email!=="string")return NextResponse.json({error:"Bad email"},{status:400});const all=await kvLRange<Subscriber>("newsletter:subscribers",0,1999);const normalized=email.toLowerCase().trim();const filtered=all.filter(s=>s.email!==normalized);if(all.length===filtered.length)return NextResponse.json({error:"Not found"},{status:404});const {kvReplaceList}=await import("../../../../lib/kv");if(!await kvReplaceList("newsletter:subscribers",filtered))return NextResponse.json({error:"Storage failure"},{status:503});await kvSet(`newsletter:subscriber:${crypto.createHash("sha256").update(normalized).digest("hex")}`,null);return NextResponse.json({ok:true});}
