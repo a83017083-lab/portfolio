@@ -1,0 +1,11 @@
+"use client";
+import {useState} from "react";
+type Kind="website"|"automation"|"product";
+const prompts:Record<Kind,{label:string;first:string;steps:string[]}>= {
+ website:{label:"Website",first:"Which visitor action should the site make easier?",steps:["List the audience and top pages", "Gather approved text, images and brand details", "Choose a contact or booking path", "Test mobile, accessibility and form delivery"]},
+ automation:{label:"Automation",first:"Which repetitive task should become easier?",steps:["Map the trigger and each data source", "Decide which steps still need human approval", "Plan exceptions, privacy and retries", "Test with fake data before using real records"]},
+ product:{label:"Digital product",first:"What is the smallest useful version?",steps:["Define one audience and problem", "Sketch one core journey", "Prototype with safe sample data", "Ask real users for feedback before expanding"]},
+};
+export default function IdeaPlanner(){const [kind,setKind]=useState<Kind>("website"),[idea,setIdea]=useState(""),[generated,setGenerated]=useState(false);const plan=prompts[kind];
+ return <section className="v2-container v2-idea-planner"><h2>Explore a project idea</h2><p>This is a simple planning worksheet, not an AI-generated plan or a quote. Keep private details out of the box.</p><label>Closest project type<select value={kind} onChange={e=>{setKind(e.target.value as Kind);setGenerated(false)}}>{Object.entries(prompts).map(([value,p])=><option key={value} value={value}>{p.label}</option>)}</select></label><label>Your idea, in one sentence<textarea rows={3} maxLength={300} value={idea} onChange={e=>{setIdea(e.target.value);setGenerated(false)}} placeholder="For example, a site for a small shop"/></label><button type="button" onClick={()=>setGenerated(true)} disabled={idea.trim().length<8}>Make a planning checklist</button>{generated&&<div className="v2-idea-result" aria-live="polite"><h3>Starting checklist</h3><p><strong>Your idea:</strong> {idea.trim()}</p><p><strong>First question:</strong> {plan.first}</p><ol>{plan.steps.map(step=><li key={step}>{step}</li>)}</ol><p>These are general steps, not a tested technical design. <a href="/contact">Share your idea to discuss the scope ↗</a></p></div>}</section>
+}
