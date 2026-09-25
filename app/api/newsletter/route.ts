@@ -1,7 +1,6 @@
 import {NextResponse} from "next/server";
-import {kvListResult,kvLPushTrim,kvRateLimit} from "../../../lib/kv";
+import {kvAddUniqueEmail,kvRateLimit} from "../../../lib/kv";
 import crypto from "crypto";
-type Subscriber={email:string;joinedAt:number;consent:boolean};
 export async function POST(req:Request){
  const ip=req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()||"unknown";
  const key=`newsletter:limit:${Math.floor(Date.now()/86400000)}:${crypto.createHash("sha256").update(ip).digest("hex")}`;
@@ -12,10 +11,8 @@ export async function POST(req:Request){
  if(body?.company)return NextResponse.json({ok:true});
  const email=typeof body?.email==="string"?body.email.trim().toLowerCase():"";
  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>200||body?.consent!==true)return NextResponse.json({error:"Valid email and consent required"},{status:400});
- const all=await kvListResult<Subscriber>("newsletter:subscribers",0,1999);
- if(!all.ok)return NextResponse.json({error:"Signup unavailable"},{status:503});
- if(all.items.some(s=>s.email===email))return NextResponse.json({ok:true});
  const record={email,joinedAt:Date.now(),consent:true};
- if(!await kvLPushTrim("newsletter:subscribers",record,2000))return NextResponse.json({error:"Signup unavailable"},{status:503});
+ const added=await kvAddUniqueEmail("newsletter:subscribers",email,record,2000);
+ if(added===null)return NextResponse.json({error:"Signup unavailable"},{status:503});
  return NextResponse.json({ok:true});
 }

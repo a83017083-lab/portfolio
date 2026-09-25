@@ -169,3 +169,16 @@ export async function kvListResult<T>(key:string,start:number,stop:number):Promi
  for(const v of r){try{items.push(JSON.parse(v) as T)}catch{return {ok:false,items:[]}}}
  return {ok:true,items};
 }
+
+/** Atomically add to a capped Redis list if a matching email is not already present. */
+export async function kvAddUniqueEmail(key:string,email:string,record:unknown,max:number):Promise<boolean|null>{
+ const lua=`local rows=redis.call('LRANGE',KEYS[1],0,-1); for _,row in ipairs(rows) do local ok,data=pcall(cjson.decode,row); if ok and data.email==ARGV[1] then return 0 end end; redis.call('LPUSH',KEYS[1],ARGV[2]); redis.call('LTRIM',KEYS[1],0,tonumber(ARGV[3])-1); return 1`;
+ const r=await cmd<number>(["EVAL",lua,1,key,email,JSON.stringify(record),max]);
+ return r===null?null:r===1;
+}
+
+/** Atomic JSON-array append. Used for private clients so concurrent admin changes cannot overwrite one another. */
+export async function kvJsonAppend(key:string,record:unknown,max:number):Promise<boolean|null>{
+ const lua=`local raw=redis.call('GET',KEYS[1]); local rows={}; if raw then local ok,data=pcall(cjson.decode,raw); if not ok or type(data)~='table' then return -1 end; rows=data end; if #rows>=tonumber(ARGV[2]) then return 0 end; table.insert(rows,cjson.decode(ARGV[1])); redis.call('SET',KEYS[1],cjson.encode(rows)); return 1`;
+ const r=await cmd<number>(["EVAL",lua,1,key,JSON.stringify(record),max]);return r===null||r===-1?null:r===1;
+}

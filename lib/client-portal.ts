@@ -1,10 +1,12 @@
 import crypto from "crypto";
-import { cookies } from "next/headers";
-import { kvGet,kvSet } from "./kv";
+import {cookies} from "next/headers";
+import {kvReadResult,kvSet,kvJsonAppend} from "./kv";
 export type ClientRecord={id:string;name:string;project:string;status:string;update:string;createdAt:number;tokenHash:string};
 const KEY="clients:v1";
-export async function listClients():Promise<ClientRecord[]>{return await kvGet<ClientRecord[]>(KEY)||[]}
+export async function readClients(){const result=await kvReadResult<ClientRecord[]>(KEY);return {ok:result.ok,clients:result.value||[]}}
+export async function listClients():Promise<ClientRecord[]>{return (await readClients()).clients}
 export async function saveClients(records:ClientRecord[]){return kvSet(KEY,records)}
+export async function addClient(record:ClientRecord){return kvJsonAppend(KEY,record,100)}
 export const tokenHash=(code:string)=>crypto.createHash("sha256").update(code).digest("hex");
 const secret=()=>process.env.ADMIN_PASSWORD||"";
 export function makeClientCookie(id:string){const payload=Buffer.from(JSON.stringify({id,exp:Date.now()+86400000})).toString("base64url");const sig=crypto.createHmac("sha256",secret()).update(payload).digest("base64url");return `${payload}.${sig}`}
