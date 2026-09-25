@@ -8,11 +8,11 @@ import { getSid } from "../../lib/sid";
 const ChatWidget = dynamic(() => import("./ChatWidget"), { ssr: false });
 const SiteSearch = dynamic(() => import("./SiteSearch"), { ssr: false });
 const AccessibilityControls = dynamic(() => import("./AccessibilityControls"), { ssr:false });
-import type { ChatbotSettings } from "../../lib/content";
+import type { SiteContent, ChatbotSettings } from "../../lib/content";
 import PageTransitions from "./PageTransitions";
 
 const routes = [["/", "Home"], ["/about", "About"], ["/work", "Work"], ["/stack", "Stack"], ["/services", "Services"], ["/blog", "Journal"], ["/faq", "FAQ"], ["/contact", "Contact"]] as const;
-export function SiteChrome({ children, chatbot, announcement, whatsappUrl }: { children: React.ReactNode; chatbot: ChatbotSettings; announcement?: string; whatsappUrl?: string }) {
+export function SiteChrome({ children, chatbot, announcement, whatsappUrl, content }: { children: React.ReactNode; chatbot: ChatbotSettings; announcement?: string; whatsappUrl?: string; content: SiteContent }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
@@ -23,7 +23,7 @@ export function SiteChrome({ children, chatbot, announcement, whatsappUrl }: { c
     {announcement && <div className="v2-announcement">{announcement}</div>}
     <div className="v2-progress" aria-hidden="true"/><header className="v2-header"><div className="v2-header-inner">
       <Link href="/" className="v2-logo" aria-label="Build With Abhinav, home"><span className="v2-logomark">a.</span><span>build with<br/><strong>abhinav</strong></span></Link>
-      <SiteSearch/><AccessibilityControls/>
+      <SiteSearch content={content}/><AccessibilityControls/>
       <button className="v2-theme-toggle" type="button" onClick={toggleTheme} aria-label={dark ? "Switch to light theme" : "Switch to dark theme"} title={dark ? "Light theme" : "Dark theme"}>{dark ? "☀ Light" : "☾ Dark"}</button>
       <button className="v2-menu" aria-expanded={open} aria-label="Toggle menu" onClick={() => setOpen(!open)}>{open ? "Close ×" : "Menu +"}</button>
       <nav className={open ? "v2-nav open" : "v2-nav"} aria-label="Main navigation">{routes.map(([href, title]) => <Link onClick={() => setOpen(false)} aria-current={path === href ? "page" : undefined} href={href} key={href}>{title}</Link>)}<Link className="v2-nav-action" href="/contact#demo" onClick={() => setOpen(false)}>Request a demo ↗</Link></nav>

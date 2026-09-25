@@ -144,3 +144,11 @@ export async function kvReplaceList(key:string,items:unknown[]):Promise<boolean>
   for(const item of items){if(await cmd<number>(["RPUSH",key,JSON.stringify(item)])===null)return false}
   return true;
 }
+
+/** Shared, fixed-window limiter. Returns null if the store is unavailable (fail closed). */
+export async function kvRateLimit(key:string, max:number, windowSeconds:number):Promise<boolean|null>{
+  const count=await kvIncr(key);
+  if(count===null)return null;
+  if(count===1){const expiry=await cmd<number>(["EXPIRE",key,windowSeconds]);if(expiry===null)return null}
+  return count<=max;
+}
