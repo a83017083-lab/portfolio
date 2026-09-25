@@ -203,12 +203,12 @@ export async function kvAddUniqueEmail(key:string,email:string,record:unknown,ma
 
 /** Atomic JSON-array append. Used for private clients so concurrent admin changes cannot overwrite one another. */
 export async function kvJsonAppend(key:string,record:unknown,max:number):Promise<boolean|null>{
- const lua=`local raw=redis.call('GET',KEYS[1]); local rows={}; if raw then local ok,data=pcall(cjson.decode,raw); if not ok or type(data)~='table' then return -1 end; rows=data end; if #rows>=tonumber(ARGV[2]) then return 0 end; table.insert(rows,cjson.decode(ARGV[1])); redis.call('SET',KEYS[1],cjson.encode(rows)); return 1`;
+ const lua=`local raw=redis.call('GET',KEYS[1]); local rows=cjson.decode('[]'); if raw then local ok,data=pcall(cjson.decode,raw); if not ok or type(data)~='table' or (raw:sub(1,1)~='[') then return -1 end; rows=data end; if #rows>=tonumber(ARGV[2]) then return 0 end; table.insert(rows,cjson.decode(ARGV[1])); redis.call('SET',KEYS[1],cjson.encode(rows)); return 1`;
  const r=await cmd<number>(["EVAL",lua,1,key,JSON.stringify(record),max]);return r===null||r===-1?null:r===1;
 }
 
 /** Atomic update/revocation of one client without racing concurrent admin actions. */
 export async function kvJsonClientMutate(key:string,id:string,op:"update"|"delete",status="",update=""):Promise<boolean|null>{
- const lua=`local raw=redis.call('GET',KEYS[1]); if not raw then return 0 end; local ok,rows=pcall(cjson.decode,raw); if not ok or type(rows)~='table' then return -1 end; for i,row in ipairs(rows) do if row.id==ARGV[1] then if ARGV[2]=='delete' then table.remove(rows,i) else row.status=ARGV[3]; row.update=ARGV[4] end; redis.call('SET',KEYS[1],cjson.encode(rows)); return 1 end end; return 0`;
+ const lua=`local raw=redis.call('GET',KEYS[1]); if not raw then return 0 end; local ok,rows=pcall(cjson.decode,raw); if not ok or type(rows)~='table' or raw:sub(1,1)~='[' then return -1 end; for i,row in ipairs(rows) do if row.id==ARGV[1] then if ARGV[2]=='delete' then table.remove(rows,i) else row.status=ARGV[3]; row.update=ARGV[4] end; if #rows==0 then redis.call('SET',KEYS[1],'[]') else redis.call('SET',KEYS[1],cjson.encode(rows)) end; return 1 end end; return 0`;
  const r=await cmd<number>(["EVAL",lua,1,key,id,op,status,update]);return r===null||r===-1?null:r===1;
 }

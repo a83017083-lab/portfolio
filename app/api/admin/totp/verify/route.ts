@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
-  const code = (body.code || "").trim();
+  const code = typeof body?.code === "string" ? body.code.trim() : "";
   if (!code) return NextResponse.json({ error: "Enter the 6-digit code." }, { status: 400 });
 
   const enrollment = await totpEnrollmentState();

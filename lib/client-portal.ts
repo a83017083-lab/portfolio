@@ -3,7 +3,7 @@ import {cookies} from "next/headers";
 import {kvReadResult,kvJsonAppend} from "./kv";
 export type ClientRecord={id:string;name:string;project:string;status:string;update:string;createdAt:number;tokenHash:string};
 const KEY="clients:v1";
-export async function readClients(){const result=await kvReadResult<ClientRecord[]>(KEY);return {ok:result.ok,clients:result.value||[]}}
+export async function readClients(){const result=await kvReadResult<ClientRecord[]>(KEY);return {ok:result.ok&&(result.value===null||Array.isArray(result.value)),clients:Array.isArray(result.value)?result.value:[]}}
 export async function addClient(record:ClientRecord){return kvJsonAppend(KEY,record,100)}
 export const tokenHash=(code:string)=>crypto.createHash("sha256").update(code).digest("hex");
 const secret=()=>process.env.ADMIN_PASSWORD||"";
