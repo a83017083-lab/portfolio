@@ -11,6 +11,7 @@ import FollowupCalendar from "./FollowupCalendar";
 import ReplyTemplate from "./ReplyTemplate";
 import SeoChecker from "./SeoChecker";
 import HealthCheck from "./HealthCheck";
+import GoalTracker from "./GoalTracker";
 import {reviewSignals} from "../../lib/spam";
 
 type Inquiry = {
@@ -21,7 +22,7 @@ type Inquiry = {
   notes?: string; followUpAt?: string; tags?: string[];
 };
 
-type Tab = "overview" | "inquiries" | "content" | "chatbot" | "publishing" | "pipeline" | "newsletter" | "coupons" | "activity" | "backup" | "followups" | "clients" | "seo" | "health";
+type Tab = "overview" | "inquiries" | "content" | "chatbot" | "publishing" | "pipeline" | "newsletter" | "coupons" | "activity" | "backup" | "followups" | "clients" | "seo" | "health" | "goals";
 
 const TABS: { id: Tab; label: string; icon: typeof Inbox }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -37,6 +38,7 @@ const TABS: { id: Tab; label: string; icon: typeof Inbox }[] = [
   { id: "backup", label: "Backup", icon: FileText },
   { id: "seo", label: "SEO checks", icon: FileText },
   { id: "health", label: "Site health", icon: FileText },
+  { id: "goals", label: "Inquiry goals", icon: LayoutDashboard },
   { id: "chatbot", label: "Chatbot", icon: Bot },
 ];
 
@@ -125,6 +127,7 @@ export default function AdminApp() {
         {tab === "clients" && <ClientsAdmin/>}
         {tab === "seo" && <SeoChecker/>}
         {tab === "health" && <HealthCheck/>}
+        {tab === "goals" && <GoalTracker inquiries={inquiries} storage={storage}/> }
         {tab === "content" && content && (
           <ContentEditor content={content} setContent={setContent} storage={storage} />
         )}
