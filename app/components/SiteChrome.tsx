@@ -7,9 +7,10 @@ import { useEffect, useState } from "react";
 import { getSid } from "../../lib/sid";
 const ChatWidget = dynamic(() => import("./ChatWidget"), { ssr: false });
 const SiteSearch = dynamic(() => import("./SiteSearch"), { ssr: false });
+const AccessibilityControls = dynamic(() => import("./AccessibilityControls"), { ssr:false });
 import type { ChatbotSettings } from "../../lib/content";
 
-const routes = [["/", "Home"], ["/about", "About"], ["/work", "Work"], ["/services", "Services"], ["/blog", "Journal"], ["/faq", "FAQ"], ["/contact", "Contact"]] as const;
+const routes = [["/", "Home"], ["/about", "About"], ["/work", "Work"], ["/stack", "Stack"], ["/services", "Services"], ["/blog", "Journal"], ["/faq", "FAQ"], ["/contact", "Contact"]] as const;
 export function SiteChrome({ children, chatbot, announcement }: { children: React.ReactNode; chatbot: ChatbotSettings; announcement?: string }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -21,13 +22,14 @@ export function SiteChrome({ children, chatbot, announcement }: { children: Reac
     {announcement && <div className="v2-announcement">{announcement}</div>}
     <div className="v2-progress" aria-hidden="true"/><header className="v2-header"><div className="v2-header-inner">
       <Link href="/" className="v2-logo" aria-label="Build With Abhinav, home"><span className="v2-logomark">a.</span><span>build with<br/><strong>abhinav</strong></span></Link>
-      <SiteSearch/>
+      <SiteSearch/><AccessibilityControls/>
       <button className="v2-theme-toggle" type="button" onClick={toggleTheme} aria-label={dark ? "Switch to light theme" : "Switch to dark theme"} title={dark ? "Light theme" : "Dark theme"}>{dark ? "☀ Light" : "☾ Dark"}</button>
       <button className="v2-menu" aria-expanded={open} aria-label="Toggle menu" onClick={() => setOpen(!open)}>{open ? "Close ×" : "Menu +"}</button>
       <nav className={open ? "v2-nav open" : "v2-nav"} aria-label="Main navigation">{routes.map(([href, title]) => <Link onClick={() => setOpen(false)} aria-current={path === href ? "page" : undefined} href={href} key={href}>{title}</Link>)}<Link className="v2-nav-action" href="/contact#demo" onClick={() => setOpen(false)}>Request a demo ↗</Link></nav>
     </div></header>
     {children}
     <footer className="v2-footer"><div className="v2-container v2-footer-grid"><div><Link href="/" className="v2-footer-brand">ABHINAV<span>®</span></Link><p>Websites and automations, built with intent.</p></div><div><small>EXPLORE</small>{routes.map(([href, title]) => <Link href={href} key={href}>{title}</Link>)}</div><div><small>ELSEWHERE</small><a href="https://github.com/a83017083-lab" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://linktr.ee/buildweth_abhinavk7852" target="_blank" rel="noopener noreferrer">Socials ↗</a><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div></div><div className="v2-container v2-footer-bottom"><span>© 2026 Build With Abhinav</span><span>Built to work, not just look good.</span></div></footer>
+    <Link className="v2-mobile-cta" href="/contact#demo">Request a demo ↗</Link>
     <a className="v2-backtop" href="#top" aria-label="Back to top">↑</a>
     <ChatWidget greeting={chatbot.greeting} enabled={chatbot.enabled} />
   </div>;
