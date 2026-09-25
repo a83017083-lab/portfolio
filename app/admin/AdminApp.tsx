@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import type { SiteContent, ChatbotSettings } from "../../lib/content";
 import AdminTheme from "../components/AdminTheme";
+import FollowupCalendar from "./FollowupCalendar";
 
 type Inquiry = {
   id: string; ts: number; name: string; email: string;
@@ -786,7 +787,6 @@ function CouponsAdmin(){const [items,setItems]=useState<CouponRecord[]|null>(nul
 function ActivityAdmin(){const[events,setEvents]=useState<{at:number;action:string;detail:string}[]>([]);useEffect(()=>{fetch("/api/admin/audit").then(r=>r.json()).then(d=>{if(Array.isArray(d.events))setEvents(d.events)}).catch(()=>{})},[]);return <><h1>Recent activity</h1><p className="page-sub">Admin saves and lead changes from this version onward. Existing historical changes were not logged.</p><div className="admin-panel">{events.length?events.map((e,i)=><div className="inq-item" key={i}><b>{e.action}</b><p>{e.detail}</p><small>{new Date(e.at).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})}</small></div>):<p>No logged changes yet.</p>}</div></>}
 function BackupAdmin(){return <><h1>Private backup</h1><p className="page-sub">Download a JSON snapshot of site content, inquiries, subscribers, private coupons, client records without access-code hashes, and recent activity. Keep it private; it contains visitor information.</p><div className="admin-panel"><h2>Export</h2><a className="admin-btn" href="/api/admin/backup" download="portfolio-backup.json">Download backup JSON</a><p className="hint" style={{marginTop:15}}>Restore is deliberately unavailable: overwriting live inquiries could lose newer messages. Keep a copy offline.</p></div></>}
 
-function FollowupCalendar({inquiries}:{inquiries:Inquiry[]|null}){const [month,setMonth]=useState(new Date().toISOString().slice(0,7));const entries=(inquiries||[]).filter(i=>i.followUpAt?.startsWith(month)).sort((a,b)=>(a.followUpAt||"").localeCompare(b.followUpAt||""));return <><h1>Follow-up calendar</h1><p className="page-sub">Dates attached to inquiries. This is a list by day; it does not create calendar invitations.</p><div className="admin-panel"><label className="admin-field"><span>Month</span><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></label>{entries.length?entries.map(i=><div className="inq-item" key={i.id}><b>{i.followUpAt}</b> · {i.name} · {i.projectType} <span className="hint">{i.status||"new"}</span></div>):<p>No follow-ups scheduled in this month.</p>}</div></>}
 
 function ChatQuestions(){const [items,setItems]=useState<{text:string;ts:number}[]|null>(null);useEffect(()=>{fetch("/api/admin/chat-questions").then(r=>r.json()).then(d=>{if(Array.isArray(d.questions))setItems(d.questions)}).catch(()=>{})},[]);return <div className="admin-panel" style={{marginTop:24}}><h2>Recent visitor questions</h2><p className="hint">Up to 100 questions across the latest 40 chatbot conversations. This is a review list, not an AI-generated trend claim.</p>{items?.map((q,i)=><div className="inq-item" key={i}><p>{q.text}</p><small>{new Date(q.ts).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})}</small></div>)}{items?.length===0&&<p>No visitor questions yet.</p>}</div>}
 
