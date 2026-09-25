@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import ShareLink from "./ShareLink";
-const anchorFor=(p:Post)=>"note-"+encodeURIComponent(p.title.toLowerCase().trim()).replace(/%/g,"-");
 import type { Post } from "../../lib/content";
+const anchorFor=(p:Post)=>"note-"+encodeURIComponent(p.title.toLowerCase().trim()).replace(/%/g,"-");
 export default function JournalBrowser({posts}:{posts:Post[]}) {
   const [query,setQuery]=useState("");
   const visible=posts.filter(p => `${p.title} ${p.excerpt} ${p.body}`.toLowerCase().includes(query.toLowerCase()));
