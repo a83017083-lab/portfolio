@@ -16,7 +16,7 @@ export function SiteChrome({ children, chatbot, announcement }: { children: Reac
   const [dark, setDark] = useState(false);
   useEffect(() => { setDark(localStorage.getItem("portfolio-theme") === "dark"); }, []);
   function toggleTheme() { const next = !dark; setDark(next); localStorage.setItem("portfolio-theme", next ? "dark" : "light"); }
-  useEffect(() => { fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sid: getSid() }) }).catch(() => {}); }, [path]);
+  useEffect(() => { fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sid: getSid(), referrer: document.referrer }) }).catch(() => {}); }, [path]);
   return <div id="top" className={dark ? "v2-shell v2-dark" : "v2-shell"}>
     {announcement && <div className="v2-announcement">{announcement}</div>}
     <div className="v2-progress" aria-hidden="true"/><header className="v2-header"><div className="v2-header-inner">

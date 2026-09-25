@@ -165,7 +165,8 @@ function Overview({
           </p>
         </div>
       )}
-      <div className="admin-panel"><h2>This week's snapshot</h2><p className="hint">{week} inquiries, {(inquiries || []).filter(i => i.score === "hot" && Date.now()-i.ts < 7*864e5).length} hot leads and {stats?.pageviews ?? "…"} total page views. Weekly email delivery is not enabled.</p></div>
+      <div className="admin-panel"><h2>This week's snapshot</h2><p className="hint">{week} inquiries, {(inquiries || []).filter(i => i.score === "hot" && Date.now()-i.ts < 7*864e5).length} hot leads and {stats?.pageviews ?? "…"} total page views. A weekly email is configured for Monday mornings after deployment.</p></div>
+      <AnalyticsChart/>
       <div className="admin-panel">
         <h2>Latest inquiries</h2>
         <p className="hint">The five most recent - open Inquiries for the full list.</p>
@@ -756,3 +757,5 @@ function Pipeline({inquiries,reload}:{inquiries:Inquiry[]|null;reload:()=>Promis
  async function move(id:string,status:string){setBusy(true);try{await fetch("/api/admin/inquiries",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status,read:true})});await reload()}finally{setBusy(false)}}
  return <><h1>Lead pipeline</h1><p className="page-sub">Move inquiries between stages. This updates their status in Inquiries too.</p><div className="pipeline-grid">{states.map(state=><section className="pipeline-col" key={state}><h2>{state === "replied" ? "Talking" : state.toUpperCase()} <small>{(inquiries||[]).filter(i=>(i.status||"new")===state).length}</small></h2>{(inquiries||[]).filter(i=>(i.status||"new")===state).map(i=><article className="pipeline-card" key={i.id}><b>{i.name}</b><p>{i.projectType}</p><small>{i.score || "unscored"}</small><select aria-label={`Move ${i.name} to`} disabled={busy} value={i.status||"new"} onChange={e=>move(i.id,e.target.value)}>{states.map(s=><option key={s} value={s}>{s === "replied" ? "Talking" : s}</option>)}</select></article>)}</section>)}</div></>;
 }
+
+function AnalyticsChart(){const [data,setData]=useState<{days:{date:string;views:number}[];sources:{name:string;views:number}[]}|null>(null);useEffect(()=>{fetch("/api/admin/analytics").then(r=>r.json()).then(d=>{if(Array.isArray(d.days))setData(d)}).catch(()=>{})},[]);return <div className="admin-panel"><h2>Traffic snapshot</h2><p className="hint">Last 14 UTC days. Source groups are approximate; no IP addresses are saved.</p>{data ? <><div className="traffic-chart">{data.days.map(d=><div key={d.date} title={`${d.date}: ${d.views} views`}><span style={{height:`${Math.max(4,Math.round(d.views/Math.max(1,...data.days.map(x=>x.views))*100))}%`}}/><small>{d.date.slice(5)}</small></div>)}</div><p className="hint">{data.sources.map(x=>`${x.name}: ${x.views}`).join(" · ")}</p></> : <p>Loading traffic data…</p>}</div>}
