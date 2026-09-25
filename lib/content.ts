@@ -5,6 +5,10 @@ export type Service = { title: string; desc: string; tags: string[] };
 export type Step = { n: string; t: string; d: string };
 export type NowItem = { t: string; d: string };
 export type Stat = { value: string; label: string };
+export type FAQ = { question: string; answer: string; published: boolean };
+export type Testimonial = { quote: string; name: string; role: string; published: boolean };
+export type Post = { title: string; excerpt: string; body: string; published: boolean; date: string };
+export type Package = { regionalPrices?: Record<string, string>; name: string; price: string; description: string; features: string[]; published: boolean };
 export type Venture = { kicker: string; title: string; desc: string; points: string[] };
 
 export type SiteContent = {
@@ -18,6 +22,12 @@ export type SiteContent = {
     chip2: string;
   };
   projects: Project[];
+  posts: Post[];
+  faqs: FAQ[];
+  testimonials: Testimonial[];
+  packages: Package[];
+  demoUrl: string;
+  announcement: string;
   services: Service[];
   process: Step[];
   now: NowItem[];
@@ -37,11 +47,28 @@ export const DEFAULT_CONTENT: SiteContent = {
     availability: "Available for projects",
     roleA: "websites",
     roleB: "AI automations",
-    sub: "Student builder from New Delhi. I learn by shipping - full-stack apps, automation workflows and open-source tools, all built in public.",
-    chip1top: "25+",
-    chip1bottom: "repos on GitHub",
+    sub: "Student builder making useful websites and automations. Clear ideas, thoughtful design and working software.",
+    chip1top: "Build",
+    chip1bottom: "in public",
     chip2: "n8n · Next.js · AI",
   },
+  demoUrl: "",
+  announcement: "",
+  packages: [
+    { name: "Starter", price: "₹4,999", regionalPrices: { IN: "₹4,999", US: "$249", GB: "£149", EU: "€169", AE: "AED 699", CA: "C$229", AU: "A$239", SG: "S$219", JP: "¥22,000", OTHER: "$149" }, description: "A focused one-page online presence.", features: ["Responsive design", "Contact form", "Basic search setup"], published: true },
+    { name: "Growth", price: "₹14,999", regionalPrices: { IN: "₹14,999", US: "$699", GB: "£449", EU: "€499", AE: "AED 1,899", CA: "C$699", AU: "A$729", SG: "S$679", JP: "¥69,000", OTHER: "$449" }, description: "A multi-page site made for a growing business.", features: ["Up to five pages", "Content editing", "Launch support"], published: true },
+    { name: "Custom", price: "Let's talk", regionalPrices: { IN: "Let's talk", US: "Let's talk", GB: "Let's talk", EU: "Let's talk", AE: "Let's talk", OTHER: "Let's talk" }, description: "Automations and tailored systems scoped together.", features: ["Discovery call", "Custom plan", "Clear quote"], published: true },
+  ],
+  testimonials: [],
+  faqs: [
+    { question: "What kinds of projects do you take on?", answer: "Websites, workflow automations and tailored digital tools. Share your idea through the contact page and I'll say if it fits.", published: true },
+    { question: "Can I see your code?", answer: "Yes. The Work page links to public repositories for the projects shown there.", published: true },
+    { question: "Are the prices final?", answer: "No. The Services page shows sample starting points. Every project gets a separate quote after we agree on scope.", published: true },
+    { question: "Is requesting a demo the same as booking?", answer: "Not yet. The demo request form sends a message and I reply to arrange a time. A calendar link will appear when live scheduling is ready.", published: true }
+  ],
+  posts: [
+    { title: "How I approach a new build", excerpt: "A short look at discovery, prototyping and shipping.", body: "I start by understanding what a visitor needs to do. Then I sketch the path, build a small working version and improve it with real feedback. This is the process I aim to use for every new project.", date: "2026-09-25", published: true },
+  ],
   projects: [
     {
       cat: "Full-stack",
@@ -116,7 +143,7 @@ export const DEFAULT_CONTENT: SiteContent = {
   ],
   process: [
     { n: "01", t: "Tell me about it", d: "Fill the form below - takes two minutes." },
-    { n: "02", t: "Plan & quote", d: "I reply within 24 hours with a clear plan, timeline and price." },
+    { n: "02", t: "Plan & quote", d: "I reply with a clear plan, timeline and price after learning about your project." },
     { n: "03", t: "Build", d: "I build in weekly updates you can actually see, not silence." },
     { n: "04", t: "Launch & support", d: "We go live, and I stick around for fixes and tweaks." },
   ],
@@ -161,14 +188,10 @@ export const DEFAULT_CONTENT: SiteContent = {
   about: {
     paragraphs: [
       "Most students only study technology. I'd rather build with it. What started as curiosity turned into a habit, and the habit turned into a brand: Build With Abhinav.",
-      "Since then I've shipped a homework portal used by a real school, automations that answer Instagram DMs on their own, and an open-source AI video tool. Some things worked, some broke - all of them taught me something.",
+      "I share my code and experiments publicly. Some things work, some break - all of them teach me something.",
       "The long game: turn good ideas into real companies, and document the journey so other students can follow the same path.",
     ],
-    stats: [
-      { value: "25+", label: "repositories on GitHub" },
-      { value: "6", label: "projects shipped & counting" },
-      { value: "100%", label: "built in public" },
-    ],
+    stats: [],
   },
 };
 
@@ -186,7 +209,7 @@ const CHATBOT_KEY = "chatbot:settings:v1";
 export async function getContent(): Promise<SiteContent> {
   const stored = await kvGet<Partial<SiteContent>>(CONTENT_KEY);
   if (!stored) return DEFAULT_CONTENT;
-  return { ...DEFAULT_CONTENT, ...stored, hero: { ...DEFAULT_CONTENT.hero, ...(stored.hero || {}) }, about: { ...DEFAULT_CONTENT.about, ...(stored.about || {}) } };
+  return { ...DEFAULT_CONTENT, ...stored, posts: stored.posts || DEFAULT_CONTENT.posts, faqs: stored.faqs || DEFAULT_CONTENT.faqs, testimonials: stored.testimonials || [], packages: stored.packages || DEFAULT_CONTENT.packages, demoUrl: stored.demoUrl || "", announcement: stored.announcement || "", hero: { ...DEFAULT_CONTENT.hero, ...(stored.hero || {}) }, about: { ...DEFAULT_CONTENT.about, ...(stored.about || {}) } };
 }
 
 export async function saveContent(content: SiteContent): Promise<boolean> {

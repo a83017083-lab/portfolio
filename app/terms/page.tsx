@@ -31,13 +31,12 @@ export default function Terms() {
 
         <h2>Content</h2>
         <p>
-          The text, design and code of this site belong to Abhinav Kumar. Client work shown here remains the
-          property of its respective owners.
+          The text, design and code of this site belong to Abhinav Kumar. Any third-party project material remains the property of its respective owners.
         </p>
 
         <h2>Contact</h2>
         <p>
-          Questions about these terms: use the <Link href="/#contact">contact form</Link> or email
+          Questions about these terms: use the <Link href="/contact">contact form</Link> or email
           a83017083@gmail.com.
         </p>
       </div>

@@ -41,6 +41,7 @@ export default function Privacy() {
           <li>To reply to your inquiry by email, including an automatic confirmation reply.</li>
           <li>To score new inquiries (hot / warm / cold) with an AI service, so the owner can prioritize replies.</li>
           <li>To review chatbot conversations and site usage statistics in a private admin panel.</li>
+          <li>To show illustrative local prices, the hosting provider supplies a country code with the request. The site does not save the visitor IP for this purpose.</li>
           <li>If the owner connects an automation tool (n8n), new inquiries are also sent to that workflow.</li>
         </ul>
 
@@ -55,7 +56,7 @@ export default function Privacy() {
         <h2>Your choices</h2>
         <p>
           Want your inquiry or chat history deleted? Ask through the{" "}
-          <Link href="/#contact">contact form</Link> or email a83017083@gmail.com and it will be removed.
+          <Link href="/contact">contact form</Link> or email a83017083@gmail.com and it will be removed.
         </p>
       </div>
     </main>

@@ -24,17 +24,19 @@ export const metadata: Metadata = {
     "short-form video editing", "reels editing India", "full-stack developer Delhi",
     "Next.js developer India", "website developer for small business", "AI automation agency India",
     "startup MVP developer", "local business website Delhi",
+    "student web developer India", "AI automation for small business", "n8n automation developer",
+    "affordable website developer Delhi", "AI chatbot for website",
   ],
   authors: [{ name: "Abhinav Kumar", url: SITE_URL }],
   creator: "Abhinav Kumar",
-  alternates: { canonical: "/" },
+
   openGraph: {
     type: "website",
     url: SITE_URL,
     siteName: "Build With Abhinav",
     title: "Abhinav Kumar - Web Developer & AI Automation Builder",
     description:
-      "Websites, AI automations, n8n workflows, WhatsApp & Instagram automation and short-form video editing for businesses and startups. New Delhi, India.",
+      "Student web developer in India building affordable websites and AI automation for small businesses. Explore Build With Abhinav projects and services.",
     locale: "en_IN",
   },
   twitter: {
@@ -64,7 +66,7 @@ const jsonLd = {
         "https://www.instagram.com/buildweth_abhinavk7852",
         "https://linktr.ee/buildweth_abhinavk7852",
       ],
-      address: { "@type": "PostalAddress", addressLocality: "New Delhi", addressCountry: "IN" },
+
       knowsAbout: [
         "Web Development", "AI Automation", "n8n Workflows", "WhatsApp Automation",
         "Instagram Automation", "Next.js", "Short-form Video Editing",
@@ -77,7 +79,7 @@ const jsonLd = {
       url: SITE_URL,
       founder: { "@id": `${SITE_URL}/#person` },
       areaServed: { "@type": "Country", name: "India" },
-      address: { "@type": "PostalAddress", addressLocality: "New Delhi", addressCountry: "IN" },
+
       description:
         "Business websites, AI automations, n8n workflows, WhatsApp & Instagram automation, coaching-centre systems and short-form video editing.",
       makesOffer: [

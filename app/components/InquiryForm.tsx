@@ -8,6 +8,7 @@ const TYPES = [
   "WhatsApp / Instagram automation",
   "Coaching centre system",
   "Something else",
+  "Demo call request",
 ];
 
 const BUDGETS = ["Under ₹5,000", "₹5,000 - ₹15,000", "₹15,000 - ₹50,000", "Not sure yet"];
@@ -62,8 +63,7 @@ export default function InquiryForm() {
         <span className="tick">✓</span>
         <h3>Got it - thank you!</h3>
         <p>
-          Your project details just landed in Abhinav&apos;s inbox. He replies personally,
-          usually within 24 hours.
+          Your request has been sent. This is not a confirmed booking; Abhinav will reply to arrange a time.
         </p>
       </div>
     );
@@ -128,7 +128,7 @@ export default function InquiryForm() {
         {state === "sending" ? "Sending…" : "Send project details →"}
       </button>
       <p className="inq-note">
-        Goes straight to Abhinav&apos;s inbox - he reads and replies himself.
+        Sends an inquiry to Abhinav. It does not reserve a call time.
       </p>
     </form>
   );

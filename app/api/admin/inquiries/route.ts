@@ -17,9 +17,9 @@ export async function GET() {
 export async function PATCH(req: Request) {
   if (!isAuthed()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => ({}));
-  const { id, read, status } = body as { id?: string; read?: boolean; status?: string };
+  const { id, read, status, notes, followUpAt } = body as { id?: string; read?: boolean; status?: string; notes?: string; followUpAt?: string };
   const okStatus = status === undefined || ["new", "replied", "won", "lost"].includes(status);
-  if (!id || (read !== undefined && typeof read !== "boolean") || !okStatus) {
+  if (!id || (read !== undefined && typeof read !== "boolean") || !okStatus || (notes !== undefined && (typeof notes !== "string" || notes.length > 2000)) || (followUpAt !== undefined && (typeof followUpAt !== "string" || (followUpAt !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(followUpAt))))) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
   const all = await readAll();
@@ -27,6 +27,8 @@ export async function PATCH(req: Request) {
   if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (typeof read === "boolean") all[idx].read = read;
   if (status) all[idx].status = status as Inquiry["status"];
+  if (notes !== undefined) all[idx].notes = notes;
+  if (followUpAt !== undefined) all[idx].followUpAt = followUpAt;
   await kvLSet("inquiries", idx, all[idx]);
   return NextResponse.json({ ok: true });
 }

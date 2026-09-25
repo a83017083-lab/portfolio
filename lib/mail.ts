@@ -13,6 +13,7 @@ export type Inquiry = {
   scoreReason?: string;
   scorer?: string;
   status?: "new" | "replied" | "won" | "lost";
+  notes?: string; followUpAt?: string;
 };
 
 function esc(s: string) {
@@ -79,7 +80,7 @@ export function autoReplyHtml(inq: Inquiry) {
       <h1 style="margin:0;color:#f4f3ef;font-size:23px;line-height:1.25;">Got it, ${first} - thank you!</h1>
     </div>
     <div style="padding:14px 32px 10px;color:#c9cbd6;font-size:14.5px;line-height:1.7;">
-      <p style="margin:0 0 14px;">Your project details just landed in Abhinav's inbox. He reads and replies to every inquiry personally - usually within 24 hours.</p>
+      <p style="margin:0 0 14px;">Your project details just landed in Abhinav's inbox. He reads and replies to every inquiry personally - as soon as he can.</p>
       <div style="background:#0b0b14;border:1px solid rgba(255,255,255,0.08);border-radius:13px;padding:16px 18px;margin:6px 0 16px;">
         <p style="margin:0 0 8px;color:#9799a8;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;">Your inquiry</p>
         <p style="margin:0;color:#f4f3ef;font-size:14px;">${esc(inq.projectType)}${inq.budget && inq.budget !== "Not specified" ? " · " + esc(inq.budget) : ""}</p>
@@ -131,7 +132,7 @@ export async function sendAutoReply(inq: Inquiry): Promise<boolean> {
       to: inq.email,
       subject: "Got your project inquiry - Abhinav here",
       html: autoReplyHtml(inq),
-      text: `Hi ${inq.name},\n\nThanks for reaching out! Your project details just landed in my inbox and I reply personally, usually within 24 hours.\n\n- Abhinav Kumar`,
+      text: `Hi ${inq.name},\n\nThanks for reaching out! Your project details just landed in my inbox and I will reply personally as soon as I can.\n\n- Abhinav Kumar`,
     });
     return true;
   } catch (e) {

@@ -12,14 +12,17 @@ type Inquiry = {
   projectType: string; budget: string; message: string; read: boolean;
   score?: "hot" | "warm" | "cold"; scoreReason?: string;
   status?: "new" | "replied" | "won" | "lost";
+  notes?: string; followUpAt?: string;
 };
 
-type Tab = "overview" | "inquiries" | "content" | "chatbot";
+type Tab = "overview" | "inquiries" | "content" | "chatbot" | "publishing" | "pipeline";
 
 const TABS: { id: Tab; label: string; icon: typeof Inbox }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "inquiries", label: "Inquiries", icon: Inbox },
+  { id: "pipeline", label: "Pipeline", icon: LayoutDashboard },
   { id: "content", label: "Site content", icon: FileText },
+  { id: "publishing", label: "Publishing", icon: FileText },
   { id: "chatbot", label: "Chatbot", icon: Bot },
 ];
 
@@ -102,8 +105,12 @@ export default function AdminApp() {
         {tab === "inquiries" && (
           <Inquiries inquiries={inquiries} storage={storage} reload={loadInquiries} />
         )}
+        {tab === "pipeline" && <Pipeline inquiries={inquiries} reload={loadInquiries} />}
         {tab === "content" && content && (
           <ContentEditor content={content} setContent={setContent} storage={storage} />
+        )}
+        {tab === "publishing" && content && (
+          <PublishingEditor content={content} setContent={setContent} storage={storage} />
         )}
         {tab === "chatbot" && settings && (
           <>
@@ -124,6 +131,7 @@ function Overview({
 }) {
   const total = inquiries?.length ?? 0;
   const week = (inquiries || []).filter((i) => Date.now() - i.ts < 7 * 864e5).length;
+  const due = (inquiries || []).filter(i => i.followUpAt && i.followUpAt <= new Date().toLocaleDateString("en-CA", {timeZone:"Asia/Kolkata"}) && !["won","lost"].includes(i.status || "new"));
   const [stats, setStats] = useState<{ pageviews: number; visitors: number; chatSessions: number; chatMessages: number } | null>(null);
   useEffect(() => {
     fetch("/api/admin/stats").then((r) => r.json()).then((d) => {
@@ -146,6 +154,7 @@ function Overview({
         <div className="admin-card"><b>{stats ? stats.chatSessions : "…"}</b><span>chat sessions</span></div>
         <div className="admin-card"><b>{stats ? stats.chatMessages : "…"}</b><span>chat questions</span></div>
       </div>
+      {due.length > 0 && <div className="admin-panel"><h2>Follow-ups due ({due.length})</h2><p className="hint">Shown when you open the admin panel; no email or push alert is sent.</p>{due.map(i=><p key={i.id}>{i.name} · {i.followUpAt} · {i.projectType}</p>)}<button className="admin-btn secondary small" onClick={() => go("inquiries")}>Open inquiries</button></div>}
       {!storage && (
         <div className="admin-panel">
           <h2>Storage not connected</h2>
@@ -156,6 +165,7 @@ function Overview({
           </p>
         </div>
       )}
+      <div className="admin-panel"><h2>This week's snapshot</h2><p className="hint">{week} inquiries, {(inquiries || []).filter(i => i.score === "hot" && Date.now()-i.ts < 7*864e5).length} hot leads and {stats?.pageviews ?? "…"} total page views. Weekly email delivery is not enabled.</p></div>
       <div className="admin-panel">
         <h2>Latest inquiries</h2>
         <p className="hint">The five most recent - open Inquiries for the full list.</p>
@@ -195,6 +205,8 @@ function Inquiries({
   const [fFrom, setFFrom] = useState("");
   const [fTo, setFTo] = useState("");
   const [q, setQ] = useState("");
+  const [sort, setSort] = useState("newest");
+  const [copied, setCopied] = useState(false);
   const [webhook, setWebhook] = useState<string | null>(null);
   const [whState, setWhState] = useState<"idle" | "saving" | "ok" | "err">("idle");
 
@@ -253,6 +265,8 @@ function Inquiries({
     return true;
   });
 
+  const ordered = [...filtered].sort((a,b) => sort === "oldest" ? a.ts-b.ts : sort === "score" ? ({hot:0,warm:1,cold:2}[a.score || "cold"] - {hot:0,warm:1,cold:2}[b.score || "cold"]) : b.ts-a.ts);
+
   return (
     <>
       <h1>Inquiries</h1>
@@ -279,7 +293,15 @@ function Inquiries({
         </div>
       </div>
 
-      <div className="lead-filters">
+      <div className="lead-filters"><button className="admin-btn secondary small" onClick={() => {
+        const quote = (x: unknown) => { const value = String(x ?? ""); const safe = /^[=+@\-\t\r]/.test(value) ? "\u0027" + value : value; return `"${safe.replace(/"/g, '""')}"`; };
+        const rows = [["Date", "Name", "Email", "Service", "Budget", "Score", "Status", "Follow up", "Notes", "Message"], ...(inquiries || []).map(i => [new Date(i.ts).toISOString(),i.name,i.email,i.projectType,i.budget,i.score || "",i.status || "new",i.followUpAt || "",i.notes || "",i.message])];
+        const csv = rows.map(row => row.map(quote).join(",")).join("\r\n");
+        const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], {type:"text/csv;charset=utf-8"}));
+        const a = document.createElement("a"); a.href = url; a.download = "portfolio-inquiries.csv"; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+      }}>Export CSV</button>
+        <button className="admin-btn secondary small" onClick={async()=>{await navigator.clipboard.writeText("https://buildweth-abhinavk7852.vercel.app/contact");setCopied(true);setTimeout(()=>setCopied(false),2000)}}>{copied ? "Copied contact link" : "Copy contact link"}</button>
+        <select value={sort} onChange={e=>setSort(e.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="score">Hot leads first</option></select>
         <input type="search" placeholder="Search name, email, message…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select value={fScore} onChange={(e) => setFScore(e.target.value)}>
           <option value="">All scores</option>
@@ -312,7 +334,7 @@ function Inquiries({
       </div>
 
       <div className="inq-list">
-        {filtered.map((i) => (
+        {ordered.map((i) => (
           <div className={`inq-item ${i.read ? "" : "unread"}`} key={i.id}>
             <div className="inq-head">
               <b>{i.name}</b>
@@ -329,6 +351,10 @@ function Inquiries({
               <span>{new Date(i.ts).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</span>
             </div>
             <div className="inq-msg">{i.message}</div>
+            <div className="admin-row2" style={{margin:"14px 0"}}>
+              <label className="admin-field"><span>Private notes</span><textarea defaultValue={i.notes || ""} key={`${i.id}-notes`} onBlur={e => { if (e.target.value !== (i.notes || "")) patch(i.id, { notes: e.target.value }); }} placeholder="Call summary, next step…" /></label>
+              <label className="admin-field"><span>Follow-up date (shown in admin when due)</span><input type="date" value={i.followUpAt || ""} onChange={e => patch(i.id, { followUpAt: e.target.value })} /></label>
+            </div>
             <div className="inq-actions">
               <a className="admin-btn small" href={`mailto:${i.email}?subject=Re: ${encodeURIComponent(i.projectType)} inquiry`}>
                 Reply
@@ -451,12 +477,13 @@ function ContentEditor({
         ))}
       </div>
 
+      <div className="admin-panel"><h2>Home announcement</h2><p className="hint">Leave blank to hide the site-wide bar.</p><input value={content.announcement || ""} onChange={e => patch(c => ({...c, announcement:e.target.value}))} /></div>
       <div className="admin-panel">
         <h2>Projects</h2>
-        <p className="hint">Work cards. Image stays as-is per project; edit text and links here.</p>
+        <p className="hint">Add and edit work cards. Image paths use existing /images/ assets.</p>
         {content.projects.map((p, i) => (
           <div className="content-editor-item" key={i}>
-            <div className="ce-head"><b>{p.name || `Project ${i + 1}`}</b></div>
+            <div className="ce-head"><b>{p.name || `Project ${i + 1}`}</b><button className="admin-btn danger small" onClick={() => patch(c => { c.projects.splice(i,1); return c; })}>Remove</button></div>
             <div className="admin-row2">
               <div className="admin-field">
                 <span>Name</span>
@@ -476,6 +503,7 @@ function ContentEditor({
                 <span>Tags (comma separated)</span>
                 <input value={tags(p.tags)} onChange={(e) => patch((c) => { c.projects[i].tags = untags(e.target.value); return c; })} />
               </div>
+              <div className="admin-field"><span>Image path</span><input value={p.img} onChange={e=>patch(c=>{c.projects[i].img=e.target.value; return c;})}/></div>
               <div className="admin-field">
                 <span>Link</span>
                 <input value={p.href} onChange={(e) => patch((c) => { c.projects[i].href = e.target.value; return c; })} />
@@ -485,6 +513,7 @@ function ContentEditor({
         ))}
       </div>
 
+      <button className="admin-btn secondary" style={{marginBottom:24}} onClick={() => patch(c => ({...c,projects:[...c.projects,{name:"",cat:"Project",desc:"",tags:[],img:"/images/proj-edtech.jpg",href:""}]}))}>+ Add project</button>
       <div className="admin-panel">
         <h2>Ventures</h2>
         <p className="hint">Startup & agency cards.</p>
@@ -704,4 +733,26 @@ function ChatViewer() {
       </div>
     </div>
   );
+}
+
+function PublishingEditor({content,setContent,storage}:{content:SiteContent;setContent:(c:SiteContent)=>void;storage:boolean}) {
+  const [status,setStatus]=useState("");
+  const patch=(fn:(c:SiteContent)=>void)=>{const c=JSON.parse(JSON.stringify(content)) as SiteContent; fn(c);setContent(c);setStatus("");};
+  async function save(){setStatus("Saving…");const r=await fetch("/api/admin/content",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({content})});setStatus(r.ok?"Saved and live.":"Could not save. Check storage and try again.");}
+  const regions=["IN","US","GB","EU","AE","CA","AU","SG","JP","OTHER"];
+  return <><h1>Publishing</h1><p className="page-sub">Edit sample prices, journal notes and real reviews. Save to publish changes.</p>
+    <div className="admin-panel"><h2>Demo call link</h2><p className="hint">An existing appointment booking page URL. Blank uses the inquiry form instead. Never paste a meeting room link here.</p><input type="url" placeholder="https://calendar.google.com/calendar/appointments/..." value={content.demoUrl || ""} onChange={e=>patch(c=>{c.demoUrl=e.target.value})}/></div>
+    <div className="admin-panel"><h2>Sample pricing by region</h2><p className="hint">Public site labels prices Starting from. INR India, USD United States, GBP UK, EUR EU, AED UAE, CAD Canada, AUD Australia, SGD Singapore, JPY Japan, USD for other countries. These are sample figures, not promises.</p>
+      {content.packages.map((p,i)=><div className="content-editor-item" key={i}><div className="ce-head"><b>Package {i+1}</b><button className="admin-btn danger small" onClick={()=>patch(c=>{c.packages.splice(i,1)})}>Remove</button></div><div className="admin-row2"><label className="admin-field"><span>Name</span><input value={p.name} onChange={e=>patch(c=>{c.packages[i].name=e.target.value})}/></label><label className="admin-field"><span>Description</span><input value={p.description} onChange={e=>patch(c=>{c.packages[i].description=e.target.value})}/></label></div><div className="admin-row2">{regions.map(r=><label className="admin-field" key={r}><span>{r} starting price</span><input value={p.regionalPrices?.[r] || ""} onChange={e=>patch(c=>{c.packages[i].regionalPrices={...c.packages[i].regionalPrices,[r]:e.target.value}})}/></label>)}</div><label className="admin-field"><span>Included (one per line)</span><textarea value={p.features.join("\n")} onChange={e=>patch(c=>{c.packages[i].features=e.target.value.split("\n")})}/></label><label><input type="checkbox" checked={p.published} onChange={e=>patch(c=>{c.packages[i].published=e.target.checked})}/> Published</label></div>)}<button className="admin-btn secondary small" onClick={()=>patch(c=>{c.packages.push({name:"New package",price:"",description:"",features:[],regionalPrices:{},published:false})})}>+ Add package</button></div>
+    <div className="admin-panel"><h2>Testimonials</h2><p className="hint">Only publish a review with the real client's permission. Empty by default.</p>{content.testimonials.map((t,i)=><div className="content-editor-item" key={i}><div className="ce-head"><b>Review {i+1}</b><button className="admin-btn danger small" onClick={()=>patch(c=>{c.testimonials.splice(i,1)})}>Remove</button></div><label className="admin-field"><span>Exact quote</span><textarea value={t.quote} onChange={e=>patch(c=>{c.testimonials[i].quote=e.target.value})}/></label><div className="admin-row2"><label className="admin-field"><span>Name</span><input value={t.name} onChange={e=>patch(c=>{c.testimonials[i].name=e.target.value})}/></label><label className="admin-field"><span>Role</span><input value={t.role} onChange={e=>patch(c=>{c.testimonials[i].role=e.target.value})}/></label></div><label><input type="checkbox" checked={t.published} onChange={e=>patch(c=>{c.testimonials[i].published=e.target.checked})}/> Publish verified review</label></div>)}<button className="admin-btn secondary small" onClick={()=>patch(c=>{c.testimonials.push({quote:"",name:"",role:"",published:false})})}>+ Add review</button></div>
+    <div className="admin-panel"><h2>FAQ</h2><p className="hint">Add real answers; public entries appear on the FAQ page.</p>{content.faqs.map((f,i)=><div className="content-editor-item" key={i}><div className="ce-head"><b>Question {i+1}</b><button className="admin-btn danger small" onClick={()=>patch(c=>{c.faqs.splice(i,1)})}>Remove</button></div><label className="admin-field"><span>Question</span><input value={f.question} onChange={e=>patch(c=>{c.faqs[i].question=e.target.value})}/></label><label className="admin-field"><span>Answer</span><textarea value={f.answer} onChange={e=>patch(c=>{c.faqs[i].answer=e.target.value})}/></label><label><input type="checkbox" checked={f.published} onChange={e=>patch(c=>{c.faqs[i].published=e.target.checked})}/> Published</label></div>)}<button className="admin-btn secondary small" onClick={()=>patch(c=>{c.faqs.push({question:"",answer:"",published:false})})}>+ Add question</button></div>
+    <div className="admin-panel"><h2>Journal</h2>{content.posts.map((p,i)=><div className="content-editor-item" key={i}><div className="ce-head"><b>Note {i+1}</b><button className="admin-btn danger small" onClick={()=>patch(c=>{c.posts.splice(i,1)})}>Remove</button></div><div className="admin-row2"><label className="admin-field"><span>Title</span><input value={p.title} onChange={e=>patch(c=>{c.posts[i].title=e.target.value})}/></label><label className="admin-field"><span>Date</span><input type="date" value={p.date} onChange={e=>patch(c=>{c.posts[i].date=e.target.value})}/></label></div><label className="admin-field"><span>Excerpt</span><input value={p.excerpt} onChange={e=>patch(c=>{c.posts[i].excerpt=e.target.value})}/></label><label className="admin-field"><span>Body</span><textarea value={p.body} onChange={e=>patch(c=>{c.posts[i].body=e.target.value})}/></label><label><input type="checkbox" checked={p.published} onChange={e=>patch(c=>{c.posts[i].published=e.target.checked})}/> Published</label></div>)}<button className="admin-btn secondary small" onClick={()=>patch(c=>{c.posts.push({title:"",excerpt:"",body:"",date:new Date().toISOString().slice(0,10),published:false})})}>+ Add note</button></div>
+    <div style={{position:"sticky",bottom:16,display:"flex",gap:14,alignItems:"center"}}><button className="admin-btn" disabled={!storage} onClick={save}>Save publishing changes</button><span>{status}</span></div></>;
+}
+
+function Pipeline({inquiries,reload}:{inquiries:Inquiry[]|null;reload:()=>Promise<void>}) {
+ const states=["new","replied","won","lost"] as const;
+ const [busy,setBusy]=useState(false);
+ async function move(id:string,status:string){setBusy(true);try{await fetch("/api/admin/inquiries",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status,read:true})});await reload()}finally{setBusy(false)}}
+ return <><h1>Lead pipeline</h1><p className="page-sub">Move inquiries between stages. This updates their status in Inquiries too.</p><div className="pipeline-grid">{states.map(state=><section className="pipeline-col" key={state}><h2>{state === "replied" ? "Talking" : state.toUpperCase()} <small>{(inquiries||[]).filter(i=>(i.status||"new")===state).length}</small></h2>{(inquiries||[]).filter(i=>(i.status||"new")===state).map(i=><article className="pipeline-card" key={i.id}><b>{i.name}</b><p>{i.projectType}</p><small>{i.score || "unscored"}</small><select aria-label={`Move ${i.name} to`} disabled={busy} value={i.status||"new"} onChange={e=>move(i.id,e.target.value)}>{states.map(s=><option key={s} value={s}>{s === "replied" ? "Talking" : s}</option>)}</select></article>)}</section>)}</div></>;
 }
