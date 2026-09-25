@@ -25,7 +25,8 @@ export async function GET(req: Request) {
   try {
     const transporter = nodemailer.createTransport({host:"smtp.gmail.com",port:465,secure:true,auth:{user:process.env.GMAIL_USER,pass:process.env.GMAIL_APP_PASSWORD}});
     await transporter.sendMail({from:`"Portfolio Site" <${process.env.GMAIL_USER}>`,to:process.env.GMAIL_USER,subject:`Portfolio weekly report - ${dayKey}`,text});
-    await kvSet(sentKey,true);
+    const marked=await kvSet(sentKey,true);
+    if(!marked)return NextResponse.json({ok:true,week:dayKey,warning:"Email sent, but deduplication could not be saved. A later retry may send another copy."});
     return NextResponse.json({ok:true,week:dayKey});
   } catch(e) { console.error("Weekly report failed",e); return NextResponse.json({error:"Mail failed"},{status:502}); }
 }
