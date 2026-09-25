@@ -1,3 +1,4 @@
+import { audit } from "../../../../lib/audit";
 import { NextResponse } from "next/server";
 import { isAuthed } from "../../../../lib/admin-guard";
 import { getContent, saveContent, DEFAULT_CONTENT, SiteContent } from "../../../../lib/content";
@@ -22,7 +23,9 @@ export async function PUT(req: Request) {
   if (content.projects.some(p => p.href && !/^https:\/\//.test(p.href)) || content.projects.some(p => p.img && !/^\/images\/[a-zA-Z0-9._-]+$/.test(p.img))) {
     return NextResponse.json({ error: "Project links must be HTTPS and images must be built-in image paths" }, { status: 400 });
   }
+  if (content.businessWhatsappUrl && !/^https:\/\/(wa\.me|api\.whatsapp\.com)\//.test(content.businessWhatsappUrl)) return NextResponse.json({error:"Business WhatsApp URL must be a WhatsApp link"},{status:400});
   const ok = await saveContent(content);
   if (!ok) return NextResponse.json({ error: "Storage unavailable - is KV connected?" }, { status: 503 });
+  await audit("site-content", "Site content saved");
   return NextResponse.json({ ok: true });
 }

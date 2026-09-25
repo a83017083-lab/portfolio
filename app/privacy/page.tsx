@@ -36,6 +36,8 @@ export default function Privacy() {
           </li>
         </ul>
 
+        <h2>Newsletter and client portal</h2>
+        <p>Newsletter signups collect your email and a required consent choice. The list is stored privately; no automatic newsletter is currently sent. Ask through the contact page to be removed. A client project page, if your project has one, is protected by a private access code and shows only that project&apos;s status and updates.</p>
         <h2>How it is used</h2>
         <ul>
           <li>To reply to your inquiry by email, including an automatic confirmation reply.</li>

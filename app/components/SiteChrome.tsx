@@ -9,9 +9,10 @@ const ChatWidget = dynamic(() => import("./ChatWidget"), { ssr: false });
 const SiteSearch = dynamic(() => import("./SiteSearch"), { ssr: false });
 const AccessibilityControls = dynamic(() => import("./AccessibilityControls"), { ssr:false });
 import type { ChatbotSettings } from "../../lib/content";
+import PageTransitions from "./PageTransitions";
 
 const routes = [["/", "Home"], ["/about", "About"], ["/work", "Work"], ["/stack", "Stack"], ["/services", "Services"], ["/blog", "Journal"], ["/faq", "FAQ"], ["/contact", "Contact"]] as const;
-export function SiteChrome({ children, chatbot, announcement }: { children: React.ReactNode; chatbot: ChatbotSettings; announcement?: string }) {
+export function SiteChrome({ children, chatbot, announcement, whatsappUrl }: { children: React.ReactNode; chatbot: ChatbotSettings; announcement?: string; whatsappUrl?: string }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
@@ -27,8 +28,9 @@ export function SiteChrome({ children, chatbot, announcement }: { children: Reac
       <button className="v2-menu" aria-expanded={open} aria-label="Toggle menu" onClick={() => setOpen(!open)}>{open ? "Close ×" : "Menu +"}</button>
       <nav className={open ? "v2-nav open" : "v2-nav"} aria-label="Main navigation">{routes.map(([href, title]) => <Link onClick={() => setOpen(false)} aria-current={path === href ? "page" : undefined} href={href} key={href}>{title}</Link>)}<Link className="v2-nav-action" href="/contact#demo" onClick={() => setOpen(false)}>Request a demo ↗</Link></nav>
     </div></header>
-    {children}
+    <PageTransitions>{children}</PageTransitions>
     <footer className="v2-footer"><div className="v2-container v2-footer-grid"><div><Link href="/" className="v2-footer-brand">ABHINAV<span>®</span></Link><p>Websites and automations, built with intent.</p></div><div><small>EXPLORE</small>{routes.map(([href, title]) => <Link href={href} key={href}>{title}</Link>)}</div><div><small>ELSEWHERE</small><a href="https://github.com/a83017083-lab" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://linktr.ee/buildweth_abhinavk7852" target="_blank" rel="noopener noreferrer">Socials ↗</a><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div></div><div className="v2-container v2-footer-bottom"><span>© 2026 Build With Abhinav</span><span>Built to work, not just look good.</span></div></footer>
+    {whatsappUrl && <a className="v2-wa" href={whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label="Open business WhatsApp">WhatsApp ↗</a>}
     <Link className="v2-mobile-cta" href="/contact#demo">Request a demo ↗</Link>
     <a className="v2-backtop" href="#top" aria-label="Back to top">↑</a>
     <ChatWidget greeting={chatbot.greeting} enabled={chatbot.enabled} />

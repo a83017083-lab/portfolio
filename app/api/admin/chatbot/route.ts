@@ -1,3 +1,4 @@
+import { audit } from "../../../../lib/audit";
 import { NextResponse } from "next/server";
 import { isAuthed } from "../../../../lib/admin-guard";
 import { getChatbotSettings, saveChatbotSettings, ChatbotSettings } from "../../../../lib/content";
@@ -22,5 +23,6 @@ export async function PUT(req: Request) {
     disabledMessage: String(s.disabledMessage || "").slice(0, 300),
   });
   if (!ok) return NextResponse.json({ error: "Storage unavailable - is KV connected?" }, { status: 503 });
+  await audit("chatbot-settings", "Chatbot settings saved");
   return NextResponse.json({ ok: true });
 }

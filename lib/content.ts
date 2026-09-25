@@ -7,7 +7,7 @@ export type NowItem = { t: string; d: string };
 export type Stat = { value: string; label: string };
 export type FAQ = { question: string; answer: string; published: boolean };
 export type Testimonial = { quote: string; name: string; role: string; published: boolean };
-export type Post = { title: string; excerpt: string; body: string; published: boolean; date: string };
+export type Post = { publishAt?: string; title: string; excerpt: string; body: string; published: boolean; date: string };
 export type Package = { regionalPrices?: Record<string, string>; name: string; price: string; description: string; features: string[]; published: boolean };
 export type Venture = { kicker: string; title: string; desc: string; points: string[] };
 
@@ -27,6 +27,7 @@ export type SiteContent = {
   testimonials: Testimonial[];
   packages: Package[];
   demoUrl: string;
+  businessWhatsappUrl: string;
   announcement: string;
   services: Service[];
   process: Step[];
@@ -53,6 +54,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     chip2: "n8n · Next.js · AI",
   },
   demoUrl: "",
+  businessWhatsappUrl: "",
   announcement: "",
   packages: [
     { name: "Starter", price: "₹4,999", regionalPrices: { IN: "₹4,999", US: "$249", GB: "£149", EU: "€169", AE: "AED 699", CA: "C$229", AU: "A$239", SG: "S$219", JP: "¥22,000", OTHER: "$149" }, description: "A focused one-page online presence.", features: ["Responsive design", "Contact form", "Basic search setup"], published: true },
@@ -209,7 +211,7 @@ const CHATBOT_KEY = "chatbot:settings:v1";
 export async function getContent(): Promise<SiteContent> {
   const stored = await kvGet<Partial<SiteContent>>(CONTENT_KEY);
   if (!stored) return DEFAULT_CONTENT;
-  return { ...DEFAULT_CONTENT, ...stored, posts: stored.posts || DEFAULT_CONTENT.posts, faqs: stored.faqs || DEFAULT_CONTENT.faqs, testimonials: stored.testimonials || [], packages: stored.packages || DEFAULT_CONTENT.packages, demoUrl: stored.demoUrl || "", announcement: stored.announcement || "", hero: { ...DEFAULT_CONTENT.hero, ...(stored.hero || {}) }, about: { ...DEFAULT_CONTENT.about, ...(stored.about || {}) } };
+  return { ...DEFAULT_CONTENT, ...stored, posts: stored.posts || DEFAULT_CONTENT.posts, faqs: stored.faqs || DEFAULT_CONTENT.faqs, testimonials: stored.testimonials || [], packages: stored.packages || DEFAULT_CONTENT.packages, demoUrl: stored.demoUrl || "", businessWhatsappUrl: stored.businessWhatsappUrl || "", announcement: stored.announcement || "", hero: { ...DEFAULT_CONTENT.hero, ...(stored.hero || {}) }, about: { ...DEFAULT_CONTENT.about, ...(stored.about || {}) } };
 }
 
 export async function saveContent(content: SiteContent): Promise<boolean> {

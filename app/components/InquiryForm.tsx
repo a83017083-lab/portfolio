@@ -16,19 +16,21 @@ const BUDGETS = ["Under ₹5,000", "₹5,000 - ₹15,000", "₹15,000 - ₹50,00
 type State = "idle" | "sending" | "done" | "error";
 
 export default function InquiryForm() {
+  const [step,setStep]=useState(1);
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (state === "sending") return;
-    const f = new FormData(e.currentTarget);
+    const form=e.currentTarget;
+    const f = new FormData(form);
     const payload = {
       name: String(f.get("name") || ""),
       email: String(f.get("email") || ""),
       projectType: String(f.get("projectType") || ""),
       budget: String(f.get("budget") || ""),
-      message: String(f.get("message") || ""),
+      message: [String(f.get("message") || ""), f.get("timeline") ? `Timeline: ${String(f.get("timeline"))}` : ""].filter(Boolean).join("\n"),
       company: String(f.get("company") || ""), // honeypot
     };
     // honeypot: bots fill hidden fields - pretend success, send nothing
@@ -71,6 +73,8 @@ export default function InquiryForm() {
 
   return (
     <form className="inq-form" onSubmit={onSubmit}>
+      <p className="v2-form-step">Step {step} of 2: {step===1?"Your contact and project":"A little more detail"}</p>
+      <div style={{display:step===1?"block":"none"}}>
       <div className="inq-row">
         <label>
           Your name *
@@ -103,6 +107,8 @@ export default function InquiryForm() {
           </select>
         </label>
       </div>
+      </div>
+      <div style={{display:step===2?"block":"none"}}>
       <label>
         Tell me about your project *
         <textarea
@@ -114,6 +120,10 @@ export default function InquiryForm() {
           placeholder="What are you building, who is it for, and when do you need it?"
         />
       </label>
+      <label>When would you like to start? (optional)
+        <select name="timeline"><option value="">Not sure yet</option><option>As soon as possible</option><option>In the next month</option><option>Flexible</option></select>
+      </label>
+      </div>
       {/* honeypot - hidden from humans */}
       <input
         name="company"
@@ -124,9 +134,10 @@ export default function InquiryForm() {
         aria-hidden="true"
       />
       {state === "error" && <p className="form-error">{error}</p>}
-      <button className="btn btn-primary inq-submit" disabled={state === "sending"}>
+      {step===1 ? <button className="btn btn-primary inq-submit" type="button" onClick={(e)=>{const form=e.currentTarget.form;if(form){const required=Array.from(form.querySelectorAll<HTMLInputElement|HTMLSelectElement>("input[name=name],input[name=email],select[name=projectType]"));if(required.every(el=>el.reportValidity()))setStep(2)}}}>Next: describe your project →</button> : <button className="btn btn-ghost" type="button" onClick={()=>setStep(1)}>← Back</button>}
+      {step===2 && <button className="btn btn-primary inq-submit" disabled={state === "sending"}>
         {state === "sending" ? "Sending…" : "Send project details →"}
-      </button>
+      </button>}
       <p className="inq-note">
         Sends an inquiry to Abhinav. It does not reserve a call time.
       </p>

@@ -13,7 +13,7 @@ export type Inquiry = {
   scoreReason?: string;
   scorer?: string;
   status?: "new" | "replied" | "won" | "lost";
-  notes?: string; followUpAt?: string;
+  notes?: string; followUpAt?: string; tags?: string[];
 };
 
 function esc(s: string) {
