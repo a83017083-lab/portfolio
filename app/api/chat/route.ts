@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getChatbotSettings } from "../../../lib/content";
+import { logChatExchange } from "../../../lib/chatlog";
 
 const SYSTEM_PROMPT = `You are the friendly AI assistant on Abhinav Kumar's portfolio website. You answer visitors' questions about Abhinav and his work, and help them start a project with him.
 
@@ -150,7 +151,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { message?: string; history?: ChatMsg[] };
+  let body: { message?: string; history?: ChatMsg[]; sid?: string };
   try {
     body = await req.json();
   } catch {
@@ -181,5 +182,7 @@ export async function POST(req: Request) {
       { status: 502 }
     );
   }
+  await logChatExchange(body.sid, message, reply);
+  await logChatExchange(body.sid, message, reply);
   return NextResponse.json({ reply });
 }

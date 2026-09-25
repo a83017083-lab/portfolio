@@ -104,7 +104,10 @@ export default function AdminApp() {
           <ContentEditor content={content} setContent={setContent} storage={storage} />
         )}
         {tab === "chatbot" && settings && (
-          <ChatbotEditor settings={settings} setSettings={setSettings} storage={storage} />
+          <>
+            <ChatbotEditor settings={settings} setSettings={setSettings} storage={storage} />
+            <ChatViewer />
+          </>
         )}
       </main>
     </div>
@@ -119,6 +122,12 @@ function Overview({
 }) {
   const total = inquiries?.length ?? 0;
   const week = (inquiries || []).filter((i) => Date.now() - i.ts < 7 * 864e5).length;
+  const [stats, setStats] = useState<{ pageviews: number; visitors: number; chatSessions: number; chatMessages: number } | null>(null);
+  useEffect(() => {
+    fetch("/api/admin/stats").then((r) => r.json()).then((d) => {
+      if (typeof d.pageviews === "number") setStats(d);
+    }).catch(() => {});
+  }, []);
   return (
     <>
       <h1>Overview</h1>
@@ -128,6 +137,12 @@ function Overview({
         <div className="admin-card"><b>{inquiries ? unread : "…"}</b><span>unread</span></div>
         <div className="admin-card"><b>{inquiries ? week : "…"}</b><span>this week</span></div>
         <div className="admin-card"><b>{settings ? (settings.enabled ? "On" : "Off") : "…"}</b><span>chatbot</span></div>
+      </div>
+      <div className="admin-cards">
+        <div className="admin-card"><b>{stats ? stats.pageviews : "…"}</b><span>page views</span></div>
+        <div className="admin-card"><b>{stats ? stats.visitors : "…"}</b><span>unique visitors</span></div>
+        <div className="admin-card"><b>{stats ? stats.chatSessions : "…"}</b><span>chat sessions</span></div>
+        <div className="admin-card"><b>{stats ? stats.chatMessages : "…"}</b><span>chat questions</span></div>
       </div>
       {!storage && (
         <div className="admin-panel">
@@ -501,5 +516,80 @@ function ChatbotEditor({
         </div>
       </div>
     </>
+  );
+}
+
+interface ConvMeta {
+  sid: string;
+  started: number;
+  lastTs: number;
+  count: number;
+  preview: string;
+}
+interface ConvMsg {
+  role: "user" | "assistant";
+  text: string;
+  ts: number;
+}
+
+function ChatViewer() {
+  const [convs, setConvs] = useState<ConvMeta[] | null>(null);
+  const [active, setActive] = useState<string>("");
+  const [msgs, setMsgs] = useState<ConvMsg[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/chats").then((r) => r.json()).then((d) => {
+      if (Array.isArray(d.conversations)) setConvs(d.conversations);
+    }).catch(() => setConvs([]));
+  }, []);
+
+  async function open(sid: string) {
+    setActive(sid);
+    setMsgs(null);
+    const r = await fetch(`/api/admin/chats?sid=${encodeURIComponent(sid)}`);
+    const d = await r.json();
+    setMsgs(Array.isArray(d.messages) ? d.messages : []);
+  }
+
+  const fmt = (ts: number) => new Date(ts).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
+  return (
+    <div className="admin-panel" style={{ marginTop: 24 }}>
+      <h2>Conversations</h2>
+      <p className="hint">Every chatbot conversation, newest first. Visitors are anonymous - no IPs, only what they type.</p>
+      <div className="chatapp">
+        <div className="chatapp-list">
+          {(convs || []).map((c) => (
+            <button key={c.sid} className={`chatapp-item ${active === c.sid ? "active" : ""}`} onClick={() => open(c.sid)}>
+              <span className="chatapp-avatar">{c.count}</span>
+              <span className="chatapp-itemmain">
+                <span className="chatapp-itemtop">
+                  <b>Visitor {c.sid.slice(0, 4)}</b>
+                  <span className="chatapp-time">{fmt(c.lastTs)}</span>
+                </span>
+                <span className="chatapp-preview">{c.preview}</span>
+              </span>
+            </button>
+          ))}
+          {convs && convs.length === 0 && <p className="admin-empty">No conversations yet.</p>}
+          {convs === null && <p className="admin-empty">Loading…</p>}
+        </div>
+        <div className="chatapp-thread">
+          {!active && <p className="admin-empty">Pick a conversation to read it.</p>}
+          {active && msgs === null && <p className="admin-empty">Loading…</p>}
+          {active && msgs && (
+            <div className="chatapp-msgs">
+              {msgs.map((m, i) => (
+                <div key={i} className={`chatbubble ${m.role === "user" ? "them" : "bot"}`}>
+                  <span className="chattext">{m.text}</span>
+                  <span className="chattime">{m.role === "user" ? "Visitor" : "Abhinav AI"} · {fmt(m.ts)}</span>
+                </div>
+              ))}
+              {msgs.length === 0 && <p className="admin-empty">Empty conversation.</p>}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

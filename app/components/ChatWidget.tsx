@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, X, SendHorizonal, Sparkles } from "lucide-react";
+import { getSid } from "../../lib/sid";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -32,7 +33,7 @@ export default function ChatWidget({ greeting, enabled }: { greeting: string; en
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history: next.slice(-13, -1) }),
+        body: JSON.stringify({ message: text, history: next.slice(-13, -1), sid: getSid() }),
       });
       const data = await res.json();
       if (res.ok && data.reply) {

@@ -15,27 +15,34 @@ function hmac(payload: string): string {
   return crypto.createHmac("sha256", secret()!).update(payload).digest("base64url");
 }
 
-export function signSession(): string {
-  const payload = Buffer.from(JSON.stringify({ exp: Date.now() + TTL_MS })).toString("base64url");
+export type SessionStage = "pre" | "full";
+
+export function signSession(stage: SessionStage = "full", ttlMs: number = TTL_MS): string {
+  const payload = Buffer.from(JSON.stringify({ exp: Date.now() + ttlMs, stage })).toString("base64url");
   return `${payload}.${hmac(payload)}`;
 }
 
-export function verifySession(token: string | undefined | null): boolean {
-  if (!token || !secret()) return false;
+export function sessionStage(token: string | undefined | null): SessionStage | null {
+  if (!token || !secret()) return null;
   const dot = token.lastIndexOf(".");
-  if (dot <= 0) return false;
+  if (dot <= 0) return null;
   const payload = token.slice(0, dot);
   const sig = token.slice(dot + 1);
   const expect = hmac(payload);
   const a = Buffer.from(sig);
   const b = Buffer.from(expect);
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString()) as { exp?: number };
-    return typeof data.exp === "number" && data.exp > Date.now();
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString()) as { exp?: number; stage?: SessionStage };
+    if (typeof data.exp !== "number" || data.exp <= Date.now()) return null;
+    return data.stage === "pre" ? "pre" : "full";
   } catch {
-    return false;
+    return null;
   }
+}
+
+export function verifySession(token: string | undefined | null): boolean {
+  return sessionStage(token) === "full";
 }
 
 export function checkPassword(candidate: string): boolean {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { getSid } from "../../lib/sid";
 import { motion } from "framer-motion";
 import {
   ArrowUpRight, ArrowDown, Globe, Workflow, MessagesSquare, GraduationCap,
@@ -48,6 +50,14 @@ const LINKS = {
 const SVC_ICONS = [Globe, Workflow, MessagesSquare, GraduationCap];
 
 export default function Home({ content, chatbot }: { content: SiteContent; chatbot: ChatbotSettings }) {
+  useEffect(() => {
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sid: getSid() }),
+    }).catch(() => {});
+  }, []);
+
   const { hero } = content;
   return (
     <main>

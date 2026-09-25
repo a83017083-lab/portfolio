@@ -120,3 +120,17 @@ export async function kvLRemIndex(key: string, index: number): Promise<boolean> 
   }
   return true;
 }
+
+export async function kvIncr(key: string, by = 1): Promise<number | null> {
+  return cmd<number>(["INCRBY", key, by]);
+}
+
+export async function kvSAdd(key: string, member: string): Promise<boolean> {
+  const r = await cmd<number>(["SADD", key, member]);
+  return r !== null;
+}
+
+export async function kvSCard(key: string): Promise<number> {
+  const r = await cmd<number>(["SCARD", key]);
+  return r ?? 0;
+}
