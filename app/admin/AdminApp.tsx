@@ -169,7 +169,7 @@ function Overview({
         <div className="admin-card"><b>{stats ? stats.chatSessions : "…"}</b><span>chat sessions</span></div>
         <div className="admin-card"><b>{stats ? stats.chatMessages : "…"}</b><span>chat questions</span></div>
       </div>
-      {due.length > 0 && <div className="admin-panel"><h2>Follow-ups due ({due.length})</h2><p className="hint">Shown in admin. A daily email reminder is configured once the new deployment is active.</p>{due.map(i=><p key={i.id}>{i.name} · {i.followUpAt} · {i.projectType}</p>)}<button className="admin-btn secondary small" onClick={() => go("inquiries")}>Open inquiries</button></div>}
+      {due.length > 0 && <div className="admin-panel"><h2>Follow-ups due ({due.length})</h2><p className="hint">Shown in admin. A daily reminder route is prepared; delivery depends on production mail and cron configuration.</p>{due.map(i=><p key={i.id}>{i.name} · {i.followUpAt} · {i.projectType}</p>)}<button className="admin-btn secondary small" onClick={() => go("inquiries")}>Open inquiries</button></div>}
       {!storage && (
         <div className="admin-panel">
           <h2>Storage not connected</h2>
@@ -180,7 +180,7 @@ function Overview({
           </p>
         </div>
       )}
-      <div className="admin-panel"><h2>This week's snapshot</h2><p className="hint">{week} inquiries, {(inquiries || []).filter(i => i.score === "hot" && Date.now()-i.ts < 7*864e5).length} hot leads and {stats?.pageviews ?? "…"} total page views. A weekly email is configured for Monday mornings after deployment.</p></div>
+      <div className="admin-panel"><h2>This week's snapshot</h2><p className="hint">{week} inquiries, {(inquiries || []).filter(i => i.score === "hot" && Date.now()-i.ts < 7*864e5).length} hot leads and {stats?.pageviews ?? "…"} total page views. A Monday email route is prepared; delivery depends on production mail and cron configuration.</p></div>
       <AnalyticsChart/>
       <div className="admin-panel">
         <h2>Latest inquiries</h2>
