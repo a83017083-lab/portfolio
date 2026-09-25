@@ -19,6 +19,7 @@ export default function InquiryForm() {
   const [step,setStep]=useState(1);
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
+  const [savedOnly,setSavedOnly]=useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,6 +49,7 @@ export default function InquiryForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
+        setSavedOnly(data.savedOnly===true);
         setState("done");
       } else {
         setError("Something went wrong - please email a83017083@gmail.com directly.");
@@ -63,10 +65,8 @@ export default function InquiryForm() {
     return (
       <div className="form-done">
         <span className="tick">✓</span>
-        <h3>Got it - thank you!</h3>
-        <p>
-          Your request has been sent. This is not a confirmed booking; Abhinav will reply to arrange a time.
-        </p>
+        <h3>{savedOnly?"Saved, but email delivery is unconfirmed":"Got it - thank you!"}</h3>
+        <p>{savedOnly?"Your request is saved privately, but we could not confirm the email notification. If it is time-sensitive, email a83017083@gmail.com directly. This is not a confirmed booking.":"Your request has been sent. This is not a confirmed booking; Abhinav will reply to arrange a time."}</p>
       </div>
     );
   }

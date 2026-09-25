@@ -66,8 +66,8 @@ export async function POST(req: Request) {
   }
 
   if (!delivered) {
-    // The inquiry is safe in the admin archive - don't tell the visitor it failed.
-    if (archived) return NextResponse.json({ ok: true });
+    // The admin archive has a copy, but email delivery was not confirmed.
+    if (archived) return NextResponse.json({ ok: true, savedOnly: true });
     return NextResponse.json(
       { error: "Could not send right now - please email a83017083@gmail.com directly." },
       { status: 502 }
