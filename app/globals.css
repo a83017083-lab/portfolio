@@ -793,3 +793,4 @@ footer span { font-family: var(--font-mono), monospace; font-size: 12px; color: 
 .v2-dark .v2-cta p,.v2-dark .v2-footer p{color:#b7c6ba}
 .v2-dark .v2-cta em,.v2-dark .v2-footer small{color:#a99eff}
 .v2-dark .v2-footer a{color:#f4f3ef}
+.v2-india-clock{margin:35px 0 0;border-top:1px solid currentColor;padding-top:23px;max-width:450px}.v2-india-clock time{display:block;font:600 32px var(--font-display),sans-serif;margin-top:9px}.v2-contact-grid .v2-india-clock p{font-size:13px;line-height:1.5;margin:7px 0 0}
