@@ -31,7 +31,7 @@ async function jevScore(projectType: string, budget: string, message: string): P
   const key = process.env.JEV_API_KEY;
   if (!key) { console.log("jev: JEV_API_KEY not set"); return null; }
   // Two Jev services expose the same typed API; the user's key may be from either.
-  const endpoints = ["https://jev-ai.pro/api/v1/systemone", "https://jev-agent.com/api/v1/systemone"];
+  const endpoints = ["https://api.typesafe.ai/v1/systemone", "https://jev-ai.pro/api/v1/systemone", "https://jev-agent.com/api/v1/systemone"];
   const body = JSON.stringify({
     state: `Service requested: ${projectType}\nBudget stated: ${budget}\nMessage: ${message}`,
     model: "jev-latest",
