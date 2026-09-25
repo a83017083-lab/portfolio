@@ -29,7 +29,7 @@ function ruleScore(projectType: string, budget: string, message: string): LeadAs
 // Not OpenAI-compatible: POST {state, model, questions} -> typed answers.
 async function jevScore(projectType: string, budget: string, message: string): Promise<LeadAssessment | null> {
   const key = process.env.JEV_API_KEY;
-  if (!key) return null;
+  if (!key) { console.log("jev: JEV_API_KEY not set"); return null; }
   try {
     const res = await fetch("https://jev-ai.pro/api/v1/systemone", {
       method: "POST",
@@ -51,7 +51,7 @@ async function jevScore(projectType: string, budget: string, message: string): P
       }),
       signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) { console.log("jev: HTTP", res.status, (await res.text()).slice(0, 200)); return null; }
     const data = await res.json();
     const a = data?.answers?.fit;
     const choice = a?.choice;
@@ -60,9 +60,10 @@ async function jevScore(projectType: string, budget: string, message: string): P
       const probs = a?.probabilities ? ` (hot ${Math.round((a.probabilities.hot ?? 0) * 100)}%, warm ${Math.round((a.probabilities.warm ?? 0) * 100)}%, cold ${Math.round((a.probabilities.cold ?? 0) * 100)}%)` : "";
       return { score: choice, reason: `Jev AI typed-decision score${conf !== null ? `, ${conf}% confidence` : ""}${probs}.`, scorer: "jev" };
     }
-  } catch {
-    // fall through to Gemini/OpenRouter
+  } catch (e) {
+    console.log("jev: error", e instanceof Error ? e.message : e);
   }
+  console.log("jev: no usable answer");
   return null;
 }
 
