@@ -13,6 +13,8 @@ import SeoChecker from "./SeoChecker";
 import HealthCheck from "./HealthCheck";
 import GoalTracker from "./GoalTracker";
 import ReviewModeration from "./ReviewModeration";
+import QuoteDraft from "./QuoteDraft";
+import ReferralNotes from "./ReferralNotes";
 import {reviewSignals} from "../../lib/spam";
 
 type Inquiry = {
@@ -23,7 +25,7 @@ type Inquiry = {
   notes?: string; followUpAt?: string; tags?: string[];
 };
 
-type Tab = "overview" | "inquiries" | "content" | "chatbot" | "publishing" | "pipeline" | "newsletter" | "coupons" | "activity" | "backup" | "followups" | "clients" | "seo" | "health" | "goals" | "reviews";
+type Tab = "overview" | "inquiries" | "content" | "chatbot" | "publishing" | "pipeline" | "newsletter" | "coupons" | "activity" | "backup" | "followups" | "clients" | "seo" | "health" | "goals" | "reviews" | "quotes" | "referrals";
 
 const TABS: { id: Tab; label: string; icon: typeof Inbox }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -35,6 +37,8 @@ const TABS: { id: Tab; label: string; icon: typeof Inbox }[] = [
   { id: "publishing", label: "Publishing", icon: FileText },
   { id: "newsletter", label: "Newsletter", icon: Mail },
   { id: "coupons", label: "Coupons", icon: FileText },
+  { id: "quotes", label: "Quote drafts", icon: FileText },
+  { id: "referrals", label: "Referral notes", icon: FileText },
   { id: "activity", label: "Activity", icon: RotateCcw },
   { id: "backup", label: "Backup", icon: FileText },
   { id: "seo", label: "SEO checks", icon: FileText },
@@ -142,6 +146,8 @@ export default function AdminApp() {
         )}
         {tab === "newsletter" && <NewsletterAdmin/>}
         {tab === "coupons" && <CouponsAdmin/>}
+        {tab === "quotes" && <QuoteDraft/>}
+        {tab === "referrals" && <ReferralNotes/>}
         {tab === "activity" && <ActivityAdmin/>}
         {tab === "backup" && <BackupAdmin/>}
         {tab === "chatbot" && settings && (
