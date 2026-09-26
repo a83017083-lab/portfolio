@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {PDFDocument,StandardFonts,rgb} from "pdf-lib";
 import {getContent} from "../../../../lib/content";
 export const dynamic="force-dynamic";
-const printable=(value:string)=>value.normalize("NFKD").replace(/[^\x20-\x7E]/g,"?").slice(0,1200);
+const printable=(value:string)=>value.replace(/³/g,"3").normalize("NFKD").replace(/[^\x20-\x7E]/g,"?").slice(0,1200);
 function wrap(text:string,max=90){const words=printable(text).split(/\s+/);const lines:string[]=[];let line="";for(const word of words){if((line+" "+word).length>max){lines.push(line);line=word}else line+=(line?" ":"")+word}if(line)lines.push(line);return lines;}
 export async function GET(req:NextRequest){
  const key=req.nextUrl.searchParams.get("project")||"";
