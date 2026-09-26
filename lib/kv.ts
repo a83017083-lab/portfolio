@@ -240,3 +240,12 @@ export async function kvConsumeEmailCode(key:string,hash:string):Promise<boolean
  const r=await cmd<number>(["EVAL",lua,1,key,hash]);return r===null||r===-1?null:r===1;
 }
 export async function kvSetExpiring(key:string,value:unknown,seconds:number):Promise<boolean>{return await cmd<string>(["SET",key,JSON.stringify(value),"EX",seconds])==="OK"}
+/** Register a new email or reuse the same verified email, without linking a project. */
+export async function kvCreateEmailAccount(key:string,record:{uid:string;email:string;name:string;createdAt:number},max:number):Promise<boolean|null>{
+ const lua=`local raw=redis.call('GET',KEYS[1]); local rows=cjson.decode('[]'); if raw then local ok,data=pcall(cjson.decode,raw); if not ok or type(data)~='table' or raw:sub(1,1)~='[' then return -1 end; rows=data end; local new=cjson.decode(ARGV[1]); for _,row in ipairs(rows) do if row.email==new.email then if row.disabled then return -2 end; return 1 end end; if #rows>=tonumber(ARGV[2]) then return 0 end; table.insert(rows,new); redis.call('SET',KEYS[1],cjson.encode(rows)); return 1`;
+ const r=await cmd<number>(["EVAL",lua,1,key,JSON.stringify(record),max]);return r===null||r===-1?null:r===1;
+}
+export async function kvSetEmailPassword(key:string,uid:string,passwordHash:string):Promise<boolean|null>{
+ const lua=`local raw=redis.call('GET',KEYS[1]); if not raw then return 0 end; local ok,rows=pcall(cjson.decode,raw); if not ok or type(rows)~='table' or raw:sub(1,1)~='[' then return -1 end; for _,row in ipairs(rows) do if row.uid==ARGV[1] and not row.disabled then row.passwordHash=ARGV[2]; redis.call('SET',KEYS[1],cjson.encode(rows)); return 1 end end; return 0`;
+ const r=await cmd<number>(["EVAL",lua,1,key,uid,passwordHash]);return r===null||r===-1?null:r===1;
+}
