@@ -218,3 +218,25 @@ export async function kvAppendUniqueLedger(key:string,record:unknown,max:number)
  const lua=`local raw=redis.call('GET',KEYS[1]); local rows=cjson.decode('[]'); if raw then local ok,data=pcall(cjson.decode,raw); if not ok or type(data)~='table' or raw:sub(1,1)~='[' then return -1 end; rows=data end; if #rows>=tonumber(ARGV[2]) then return 0 end; local new=cjson.decode(ARGV[1]); local balance=0; for _,row in ipairs(rows) do if row.id==new.id or (row.invoiceRef==new.invoiceRef and row.kind==new.kind and (row.clientId==new.clientId or new.kind=='earned')) then return 0 end; if row.clientId==new.clientId and row.currency==new.currency then if row.kind=='earned' then balance=balance+row.amountMinor else balance=balance-row.amountMinor end end end; if new.kind=='redeemed' and new.amountMinor>balance then return 0 end; table.insert(rows,new); redis.call('SET',KEYS[1],cjson.encode(rows)); return 1`;
  const r=await cmd<number>(["EVAL",lua,1,key,JSON.stringify(record),max]);return r===null||r===-1?null:r===1;
 }
+
+/** Atomic first login registration; a claimed email alone never links a client wallet. */
+export async function kvUpsertAuthAccount(key:string,record:{uid:string;email:string;name:string;createdAt:number},max:number):Promise<boolean|null>{
+ const lua=`local raw=redis.call('GET',KEYS[1]); local rows=cjson.decode('[]'); if raw then local ok,data=pcall(cjson.decode,raw); if not ok or type(data)~='table' or raw:sub(1,1)~='[' then return -1 end; rows=data end; local new=cjson.decode(ARGV[1]); for _,row in ipairs(rows) do if row.uid==new.uid then if row.disabled then return -2 end; row.email=new.email; row.name=new.name; redis.call('SET',KEYS[1],cjson.encode(rows)); return 1 end end; if #rows>=tonumber(ARGV[2]) then return 0 end; table.insert(rows,new); redis.call('SET',KEYS[1],cjson.encode(rows)); return 1`;
+ const r=await cmd<number>(["EVAL",lua,1,key,JSON.stringify(record),max]);return r===null||r===-1?null:r===-2?false:r===1;
+}
+/** A project is bound only by its owner, never from an email/name supplied by a visitor. */
+export async function kvSetAuthClient(key:string,uid:string,clientId:string|null):Promise<boolean|null>{
+ const lua=`local raw=redis.call('GET',KEYS[1]); if not raw then return 0 end; local ok,rows=pcall(cjson.decode,raw); if not ok or type(rows)~='table' or raw:sub(1,1)~='[' then return -1 end; for _,row in ipairs(rows) do if row.uid==ARGV[1] then if ARGV[2]~='' then for _,other in ipairs(rows) do if other.uid~=ARGV[1] and other.clientId==ARGV[2] then return -2 end end end; if ARGV[2]=='' then row.clientId=cjson.null else row.clientId=ARGV[2] end; redis.call('SET',KEYS[1],cjson.encode(rows)); return 1 end end; return 0`;
+ const r=await cmd<number>(["EVAL",lua,1,key,uid,clientId||""]);return r===null||r===-1?null:r===1;
+}
+export async function kvDisableAuthAccount(key:string,uid:string):Promise<boolean|null>{
+ const lua=`local raw=redis.call('GET',KEYS[1]); if not raw then return 0 end; local ok,rows=pcall(cjson.decode,raw); if not ok or type(rows)~='table' or raw:sub(1,1)~='[' then return -1 end; for _,row in ipairs(rows) do if row.uid==ARGV[1] then row.disabled=true; row.clientId=cjson.null; redis.call('SET',KEYS[1],cjson.encode(rows)); return 1 end end; return 0`;
+ const r=await cmd<number>(["EVAL",lua,1,key,uid]);return r===null||r===-1?null:r===1;
+}
+
+/** Consume an email login code once; compare hashes in Redis and delete atomically. */
+export async function kvConsumeEmailCode(key:string,hash:string):Promise<boolean|null>{
+ const lua=`local raw=redis.call('GET',KEYS[1]); if not raw then return 0 end; local ok,data=pcall(cjson.decode,raw); if not ok or type(data)~='table' then return -1 end; if data.hash~=ARGV[1] then return 0 end; redis.call('DEL',KEYS[1]); return 1`;
+ const r=await cmd<number>(["EVAL",lua,1,key,hash]);return r===null||r===-1?null:r===1;
+}
+export async function kvSetExpiring(key:string,value:unknown,seconds:number):Promise<boolean>{return await cmd<string>(["SET",key,JSON.stringify(value),"EX",seconds])==="OK"}

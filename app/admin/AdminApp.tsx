@@ -16,6 +16,7 @@ import ReviewModeration from "./ReviewModeration";
 import QuoteDraft from "./QuoteDraft";
 import ReferralNotes from "./ReferralNotes";
 import ReferralLedger from "./ReferralLedger";
+import AuthAccounts from "./AuthAccounts";
 import {reviewSignals} from "../../lib/spam";
 
 type Inquiry = {
@@ -26,7 +27,7 @@ type Inquiry = {
   notes?: string; followUpAt?: string; tags?: string[];
 };
 
-type Tab = "overview" | "inquiries" | "content" | "chatbot" | "publishing" | "pipeline" | "newsletter" | "coupons" | "activity" | "backup" | "followups" | "clients" | "seo" | "health" | "goals" | "reviews" | "quotes" | "referrals" | "referralLedger";
+type Tab = "overview" | "inquiries" | "content" | "chatbot" | "publishing" | "pipeline" | "newsletter" | "coupons" | "activity" | "backup" | "followups" | "clients" | "seo" | "health" | "goals" | "reviews" | "quotes" | "referrals" | "referralLedger" | "authAccounts";
 
 const TABS: { id: Tab; label: string; icon: typeof Inbox }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -34,6 +35,7 @@ const TABS: { id: Tab; label: string; icon: typeof Inbox }[] = [
   { id: "pipeline", label: "Pipeline", icon: LayoutDashboard },
   { id: "followups", label: "Follow-ups", icon: RotateCcw },
   { id: "clients", label: "Client portal", icon: FileText },
+  { id: "authAccounts", label: "Account sign-ins", icon: FileText },
   { id: "content", label: "Site content", icon: FileText },
   { id: "publishing", label: "Publishing", icon: FileText },
   { id: "newsletter", label: "Newsletter", icon: Mail },
@@ -136,6 +138,7 @@ export default function AdminApp() {
         {tab === "pipeline" && <Pipeline inquiries={inquiries} reload={loadInquiries} />}
         {tab === "followups" && <FollowupCalendar inquiries={inquiries}/>}
         {tab === "clients" && <ClientsAdmin/>}
+        {tab === "authAccounts" && <AuthAccounts/>}
         {tab === "seo" && <SeoChecker/>}
         {tab === "health" && <HealthCheck/>}
         {tab === "goals" && <GoalTracker inquiries={inquiries} storage={storage}/> }
