@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {getContent} from "../../lib/content";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "What this site collects and how it is used - plain language privacy policy for buildweth-abhinavk7852.vercel.app.",
 };
 
-export default function Privacy() {
+export const dynamic="force-dynamic";
+export default async function Privacy() {
+  const content=await getContent();
   return (
     <main className="legal-page">
       <div className="wrap">
         <h1>Privacy Policy</h1>
-        <p className="legal-updated">Last updated: 25 September 2026</p>
+        <p className="legal-updated">Last updated: 26 September 2026</p>
 
         <p>
           This site is run by Abhinav Kumar ("Build With Abhinav"), New Delhi, India. This page explains,
@@ -39,6 +42,7 @@ export default function Privacy() {
 
         <h2>Newsletter and client portal</h2>
         <p>Newsletter signups collect your email and a required consent choice. The list is stored privately; no automatic newsletter is currently sent. Ask through the contact page to be removed. A client project page, if your project has one, is protected by a private access code and shows only that project&apos;s status and updates.</p>
+        <h2>Private accounts and Build Credit</h2><p>{content.legal.privacyWallet} The owner may store a referral note and an invoice-based credit adjustment; the account does not take payments or permit top-ups. See the <Link href="/wallet-policy">Build Credit policy</Link>.</p>
         <h2>How it is used</h2>
         <ul>
           <li>To send the inquiry to the owner when mail works, and send an automatic confirmation reply only after the owner notification succeeds. If mail is unavailable but the private archive saved your inquiry, the form tells you email delivery is unconfirmed.</li>

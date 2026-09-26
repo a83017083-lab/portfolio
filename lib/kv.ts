@@ -212,3 +212,9 @@ export async function kvJsonClientMutate(key:string,id:string,op:"update"|"delet
  const lua=`local raw=redis.call('GET',KEYS[1]); if not raw then return 0 end; local ok,rows=pcall(cjson.decode,raw); if not ok or type(rows)~='table' or raw:sub(1,1)~='[' then return -1 end; for i,row in ipairs(rows) do if row.id==ARGV[1] then if ARGV[2]=='delete' then table.remove(rows,i) else row.status=ARGV[3]; row.update=ARGV[4] end; if #rows==0 then redis.call('SET',KEYS[1],'[]') else redis.call('SET',KEYS[1],cjson.encode(rows)) end; return 1 end end; return 0`;
  const r=await cmd<number>(["EVAL",lua,1,key,id,op,status,update]);return r===null||r===-1?null:r===1;
 }
+
+/** Append one immutable wallet adjustment atomically, rejecting duplicates and over-redemption. */
+export async function kvAppendUniqueLedger(key:string,record:unknown,max:number):Promise<boolean|null>{
+ const lua=`local raw=redis.call('GET',KEYS[1]); local rows=cjson.decode('[]'); if raw then local ok,data=pcall(cjson.decode,raw); if not ok or type(data)~='table' or raw:sub(1,1)~='[' then return -1 end; rows=data end; if #rows>=tonumber(ARGV[2]) then return 0 end; local new=cjson.decode(ARGV[1]); local balance=0; for _,row in ipairs(rows) do if row.id==new.id or (row.invoiceRef==new.invoiceRef and row.kind==new.kind and row.clientId==new.clientId) then return 0 end; if row.clientId==new.clientId and row.currency==new.currency then if row.kind=='earned' then balance=balance+row.amountMinor else balance=balance-row.amountMinor end end end; if new.kind=='redeemed' and new.amountMinor>balance then return 0 end; table.insert(rows,new); redis.call('SET',KEYS[1],cjson.encode(rows)); return 1`;
+ const r=await cmd<number>(["EVAL",lua,1,key,JSON.stringify(record),max]);return r===null||r===-1?null:r===1;
+}

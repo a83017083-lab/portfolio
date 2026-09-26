@@ -15,6 +15,7 @@ import GoalTracker from "./GoalTracker";
 import ReviewModeration from "./ReviewModeration";
 import QuoteDraft from "./QuoteDraft";
 import ReferralNotes from "./ReferralNotes";
+import ReferralLedger from "./ReferralLedger";
 import {reviewSignals} from "../../lib/spam";
 
 type Inquiry = {
@@ -25,7 +26,7 @@ type Inquiry = {
   notes?: string; followUpAt?: string; tags?: string[];
 };
 
-type Tab = "overview" | "inquiries" | "content" | "chatbot" | "publishing" | "pipeline" | "newsletter" | "coupons" | "activity" | "backup" | "followups" | "clients" | "seo" | "health" | "goals" | "reviews" | "quotes" | "referrals";
+type Tab = "overview" | "inquiries" | "content" | "chatbot" | "publishing" | "pipeline" | "newsletter" | "coupons" | "activity" | "backup" | "followups" | "clients" | "seo" | "health" | "goals" | "reviews" | "quotes" | "referrals" | "referralLedger";
 
 const TABS: { id: Tab; label: string; icon: typeof Inbox }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -39,6 +40,7 @@ const TABS: { id: Tab; label: string; icon: typeof Inbox }[] = [
   { id: "coupons", label: "Coupons", icon: FileText },
   { id: "quotes", label: "Quote drafts", icon: FileText },
   { id: "referrals", label: "Referral notes", icon: FileText },
+  { id: "referralLedger", label: "Referral wallet", icon: FileText },
   { id: "activity", label: "Activity", icon: RotateCcw },
   { id: "backup", label: "Backup", icon: FileText },
   { id: "seo", label: "SEO checks", icon: FileText },
@@ -148,6 +150,7 @@ export default function AdminApp() {
         {tab === "coupons" && <CouponsAdmin/>}
         {tab === "quotes" && <QuoteDraft/>}
         {tab === "referrals" && <ReferralNotes/>}
+        {tab === "referralLedger" && <ReferralLedger/>}
         {tab === "activity" && <ActivityAdmin/>}
         {tab === "backup" && <BackupAdmin/>}
         {tab === "chatbot" && settings && (
@@ -477,6 +480,9 @@ function ContentEditor({
         {!storage && " (storage not connected - saving will fail)"}
       </p>
 
+      <div className="admin-panel"><h2>Stack page</h2><p className="hint">Displayed tool names. Only list tools actually used.</p><textarea rows={4} value={(content.stackItems||[]).join("\n")} onChange={e=>patch(c=>({...c,stackItems:e.target.value.split("\n").map(x=>x.trim()).filter(Boolean)}))}/></div>
+      <div className="admin-panel"><h2>Resource links</h2><p className="hint">Only existing files under /resources/ are permitted.</p>{(content.resourceCards||[]).map((r,i)=><div className="content-editor-item" key={i}><div className="ce-head"><b>Resource {i+1}</b><button type="button" className="admin-btn danger small" onClick={()=>patch(c=>{c.resourceCards.splice(i,1);return c})}>Remove</button></div><label className="admin-field"><span>Title</span><input value={r.title} onChange={e=>patch(c=>{c.resourceCards[i].title=e.target.value;return c})}/></label><label className="admin-field"><span>Description</span><textarea value={r.description} onChange={e=>patch(c=>{c.resourceCards[i].description=e.target.value;return c})}/></label><label className="admin-field"><span>Existing file path</span><input value={r.href} onChange={e=>patch(c=>{c.resourceCards[i].href=e.target.value;return c})}/></label></div>)}<button type="button" className="admin-btn secondary small" onClick={()=>patch(c=>({...c,resourceCards:[...c.resourceCards,{title:"",description:"",href:"/resources/project-brief.md"}]}))}>+ Add resource</button></div>
+      <div className="admin-panel"><h2>Legal and wallet page copy</h2><p className="hint">Text shown on the public Wallet and Refund policy pages, plus Privacy and Terms. Check wording before saving. No payment is taken on this website.</p>{(["walletIntro","walletDetails","refundDetails","privacyWallet","termsWallet"] as const).map(k=><label className="admin-field" key={k}><span>{k}</span><textarea rows={4} maxLength={3500} value={content.legal?.[k]||""} onChange={e=>patch(c=>({...c,legal:{...c.legal,[k]:e.target.value}}))}/></label>)}</div>
       <div className="admin-panel">
         <h2>Hero</h2>
         <p className="hint">The top of the page visitors see first.</p>

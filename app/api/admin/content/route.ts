@@ -19,6 +19,9 @@ export async function PUT(req: Request) {
   if (JSON.stringify(content).length > 120000 || (content.demoUrl && (!/^https:\/\//.test(content.demoUrl) || content.demoUrl.length > 500)) || (content.posts && (!Array.isArray(content.posts) || content.posts.length > 100)) || (content.testimonials && (!Array.isArray(content.testimonials) || content.testimonials.length > 100))) {
     return NextResponse.json({ error: "Invalid or oversized content" }, { status: 400 });
   }
+  if (content.stackItems && (!Array.isArray(content.stackItems)||content.stackItems.length>25||content.stackItems.some(x=>typeof x!=="string"||x.length>80))) return NextResponse.json({error:"Invalid stack"},{status:400});
+  if (content.resourceCards && (!Array.isArray(content.resourceCards)||content.resourceCards.length>20||content.resourceCards.some(r=>!r||typeof r.title!=="string"||r.title.length>100||typeof r.description!=="string"||r.description.length>400||typeof r.href!=="string"||!/^\/resources\/[a-z0-9-]+\.md$/.test(r.href)))) return NextResponse.json({error:"Invalid resource cards"},{status:400});
+  if (content.legal && (typeof content.legal!=="object" || Object.values(content.legal).some(v=>typeof v!=="string"||v.length>3500))) return NextResponse.json({error:"Invalid legal copy"},{status:400});
   if (content.faqs && (!Array.isArray(content.faqs) || content.faqs.length > 100)) return NextResponse.json({error:"Invalid FAQ"},{status:400});
   if (content.projects.some(p => p.href && !/^https:\/\//.test(p.href)) || content.projects.some(p => p.img && !/^\/images\/[a-zA-Z0-9._-]+$/.test(p.img))) {
     return NextResponse.json({ error: "Project links must be HTTPS and images must be built-in image paths" }, { status: 400 });

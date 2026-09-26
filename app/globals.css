@@ -812,3 +812,5 @@ footer span { font-family: var(--font-mono), monospace; font-size: 12px; color: 
 .v2-case-body a{display:inline-block;margin-right:18px;margin-top:10px}
 @media(min-width:701px) and (max-width:1300px){.v2-header-inner{max-width:100%;gap:8px}.v2-nav a{font-size:10px}.v2-theme-toggle{padding:7px 9px}.v2-search-btn{padding:6px}.v2-nav-action{padding:9px!important}}
 @media(min-width:701px) and (max-width:1300px){.v2-header-inner{justify-content:space-between}.v2-nav{margin-left:auto}.v2-logo{margin-right:0}}
+.client-account-heading{display:flex;align-items:center;gap:12px;margin:20px 0}.client-account-heading img{border-radius:50%;object-fit:cover}
+.client-wallet{border-top:1px solid currentColor;margin:24px 0;padding-top:20px}.client-wallet p{line-height:1.55}

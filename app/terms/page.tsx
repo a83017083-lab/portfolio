@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {getContent} from "../../lib/content";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
   description: "Terms of use for buildweth-abhinavk7852.vercel.app - plain language.",
 };
 
-export default function Terms() {
+export const dynamic="force-dynamic";
+export default async function Terms() {
+  const content=await getContent();
   return (
     <main className="legal-page">
       <div className="wrap">
         <h1>Terms of Use</h1>
-        <p className="legal-updated">Last updated: 25 September 2026</p>
+        <p className="legal-updated">Last updated: 26 September 2026</p>
 
         <h2>The site</h2>
         <p>
@@ -29,6 +32,7 @@ export default function Terms() {
             not commitments or professional advice.</li>
         </ul>
 
+        <h2>Build Credit and referrals</h2><p>{content.legal.termsWallet} See the <Link href="/wallet-policy">wallet policy</Link> and <Link href="/refund-policy">refund policy</Link>.</p>
         <h2>Content</h2>
         <p>
           The text, design and code of this site belong to Abhinav Kumar. Any third-party project material remains the property of its respective owners.

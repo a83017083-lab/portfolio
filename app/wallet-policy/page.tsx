@@ -1,0 +1,5 @@
+import Link from "next/link";
+import {getContent} from "../../lib/content";
+export const dynamic="force-dynamic";
+export const metadata={title:"Build Credit wallet policy",description:"How private referral credits work on Build With Abhinav.",alternates:{canonical:"/wallet-policy"}};
+export default async function Page(){const c=await getContent();return <main className="legal-page"><div className="wrap"><h1>Build Credit wallet policy</h1><p className="legal-updated">Last updated: 26 September 2026</p><p>{c.legal.walletIntro}</p><p>{c.legal.walletDetails}</p><h2>Your account</h2><p>Only clients with an owner-issued private access code can see their own project and credit summary. No public wallet signup, referral link, balance transfer or automatic credit exists. If a credit looks wrong, ask the owner to check the outside-site invoice. <Link href="/client">Private client account</Link>.</p><h2>Questions</h2><p>Use the <Link href="/contact">contact form</Link> or the contact on your invoice. The <Link href="/refund-policy">refund policy</Link> explains why there is no website checkout refund.</p></div></main>}

@@ -29,6 +29,9 @@ export type SiteContent = {
   demoUrl: string;
   businessWhatsappUrl: string;
   announcement: string;
+  legal: { walletIntro:string; walletDetails:string; refundDetails:string; privacyWallet:string; termsWallet:string };
+  stackItems:string[];
+  resourceCards:{title:string;description:string;href:string}[];
   services: Service[];
   process: Step[];
   now: NowItem[];
@@ -56,6 +59,9 @@ export const DEFAULT_CONTENT: SiteContent = {
   demoUrl: "",
   businessWhatsappUrl: "",
   announcement: "",
+  stackItems:["Next.js","TypeScript","React","n8n","Node.js","Supabase","PostgreSQL","Tailwind CSS"],
+  resourceCards:[{title:"Website project brief",description:"Questions to settle the audience, pages, scope and handover before getting a quote.",href:"/resources/project-brief.md"},{title:"Automation discovery worksheet",description:"Map steps, exceptions, privacy and test cases before automating a process.",href:"/resources/automation-planner.md"},{title:"Website launch checklist",description:"A practical starting list for content, forms, access, privacy and rollback checks.",href:"/resources/website-launch-checklist.md"}],
+  legal: { walletIntro:"Build Credit is a private invoice credit ledger. You cannot add money, pay, transfer or withdraw cash on this site.", walletDetails:"When the owner confirms a real referred project invoice outside the site, the referred buyer may get 5% off the agreed plan price and the referrer may receive 10% of that price as future invoice credit. The owner records and applies adjustments manually. Until recorded, a proposed reward is not a balance. Credits are tracked separately by currency and are not cash.", refundDetails:"This website does not take payments or deduct money from a wallet. There is no website checkout to refund. If you have paid an invoice outside this website and need to discuss a refund or billing adjustment, contact the owner using the details on that invoice or through the contact page. Any separate project agreement controls that payment.", privacyWallet:"Client account access uses a private code. The owner keeps project status, referral invoice references and credit entries in private storage. Each client sees only their own status and applicable credit summary, not another client's name or invoice details.", termsWallet:"Credits are displayed only after the owner confirms an outside-site invoice. They are not cash, cannot be topped up or transferred on this website, and are applied manually to a later invoice. A shown credit does not by itself place an order or change an invoice." },
   packages: [
     { name: "Starter", price: "₹4,999", regionalPrices: { IN: "₹4,999", US: "$249", GB: "£149", EU: "€169", AE: "AED 699", CA: "C$229", AU: "A$239", SG: "S$219", JP: "¥22,000", OTHER: "$149" }, description: "A focused one-page online presence.", features: ["Responsive design", "Contact form", "Basic search setup"], published: true },
     { name: "Growth", price: "₹14,999", regionalPrices: { IN: "₹14,999", US: "$699", GB: "£449", EU: "€499", AE: "AED 1,899", CA: "C$699", AU: "A$729", SG: "S$679", JP: "¥69,000", OTHER: "$449" }, description: "A multi-page site made for a growing business.", features: ["Up to five pages", "Content editing", "Launch support"], published: true },
@@ -211,7 +217,7 @@ const CHATBOT_KEY = "chatbot:settings:v1";
 export async function getContent(): Promise<SiteContent> {
   const stored = await kvGet<Partial<SiteContent>>(CONTENT_KEY);
   if (!stored) return DEFAULT_CONTENT;
-  return { ...DEFAULT_CONTENT, ...stored, posts: stored.posts || DEFAULT_CONTENT.posts, faqs: stored.faqs || DEFAULT_CONTENT.faqs, testimonials: stored.testimonials || [], packages: stored.packages || DEFAULT_CONTENT.packages, demoUrl: stored.demoUrl || "", businessWhatsappUrl: stored.businessWhatsappUrl || "", announcement: stored.announcement || "", hero: { ...DEFAULT_CONTENT.hero, ...(stored.hero || {}) }, about: { ...DEFAULT_CONTENT.about, ...(stored.about || {}) } };
+  return { ...DEFAULT_CONTENT, ...stored, posts: stored.posts || DEFAULT_CONTENT.posts, faqs: stored.faqs || DEFAULT_CONTENT.faqs, testimonials: stored.testimonials || [], packages: stored.packages || DEFAULT_CONTENT.packages, demoUrl: stored.demoUrl || "", businessWhatsappUrl: stored.businessWhatsappUrl || "", announcement: stored.announcement || "", legal: { ...DEFAULT_CONTENT.legal, ...(stored.legal || {}) }, stackItems:Array.isArray(stored.stackItems)?stored.stackItems:DEFAULT_CONTENT.stackItems, resourceCards:Array.isArray(stored.resourceCards)?stored.resourceCards:DEFAULT_CONTENT.resourceCards, hero: { ...DEFAULT_CONTENT.hero, ...(stored.hero || {}) }, about: { ...DEFAULT_CONTENT.about, ...(stored.about || {}) } };
 }
 
 export async function saveContent(content: SiteContent): Promise<boolean> {
