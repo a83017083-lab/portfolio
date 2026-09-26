@@ -14,6 +14,8 @@ export type Venture = { kicker: string; title: string; desc: string; points: str
 export type SiteContent = {
   hero: {
     availability: string;
+    headlineFirst: string;
+    headlineSecond: string;
     roleA: string;
     roleB: string;
     sub: string;
@@ -29,6 +31,8 @@ export type SiteContent = {
   demoUrl: string;
   businessWhatsappUrl: string;
   announcement: string;
+  footer: { brandLine:string; bottomLine:string };
+  pageCopy: Record<"about"|"work"|"services"|"blog"|"faq"|"contact"|"stack"|"resources",{title:string;description:string}>;
   legal: { walletIntro:string; walletDetails:string; refundDetails:string; privacyWallet:string; termsWallet:string };
   stackItems:string[];
   resourceCards:{title:string;description:string;href:string}[];
@@ -49,6 +53,8 @@ export type ChatbotSettings = {
 export const DEFAULT_CONTENT: SiteContent = {
   hero: {
     availability: "Available for projects",
+    headlineFirst: "Ideas into",
+    headlineSecond: "impact",
     roleA: "websites",
     roleB: "AI automations",
     sub: "Student builder making useful websites and automations. Clear ideas, thoughtful design and working software.",
@@ -59,6 +65,17 @@ export const DEFAULT_CONTENT: SiteContent = {
   demoUrl: "",
   businessWhatsappUrl: "",
   announcement: "",
+  footer: {brandLine:"Websites and automations, built with intent.",bottomLine:"Built to work, not just look good."},
+  pageCopy: {
+    about:{title:"A little about me.",description:"I am a student builder making digital products and systems with a bias for useful, clear results."},
+    work:{title:"Made, not imagined.",description:"A selection of builds and experiments. Explore the source for each project."},
+    services:{title:"Practical, by design.",description:"Websites, workflows and digital tools tailored to the problem, not a template."},
+    blog:{title:"Notes from the build.",description:"Ideas, process notes and experiments from the workbench."},
+    faq:{title:"The useful details.",description:"Answers to common questions about the work and how to get started."},
+    contact:{title:"Start with a conversation.",description:"Tell me what you have in mind. No long brief needed to begin."},
+    stack:{title:"The tools behind the builds.",description:"A practical mix of design, development and automation tools. Different problems call for different tools."},
+    resources:{title:"Start with a clearer plan.",description:"Simple downloadable worksheets. No email required, no hidden signup."},
+  },
   stackItems:["Next.js","TypeScript","React","n8n","Node.js","Supabase","PostgreSQL","Tailwind CSS"],
   resourceCards:[{title:"Website project brief",description:"Questions to settle the audience, pages, scope and handover before getting a quote.",href:"/resources/project-brief.md"},{title:"Automation discovery worksheet",description:"Map steps, exceptions, privacy and test cases before automating a process.",href:"/resources/automation-planner.md"},{title:"Website launch checklist",description:"A practical starting list for content, forms, access, privacy and rollback checks.",href:"/resources/website-launch-checklist.md"}],
   legal: { walletIntro:"Build Credit is a private invoice credit ledger. You cannot add money, pay, transfer or withdraw cash on this site.", walletDetails:"When the owner confirms a real referred project invoice outside the site, the referred buyer may get 5% off the agreed plan price and the referrer may receive 10% of that price as future invoice credit. The owner records and applies adjustments manually. Until recorded, a proposed reward is not a balance. Credits are tracked separately by currency and are not cash.", refundDetails:"This website does not take payments or deduct money from a wallet. There is no website checkout to refund. If you have paid an invoice outside this website and need to discuss a refund or billing adjustment, contact the owner using the details on that invoice or through the contact page. Any separate project agreement controls that payment.", privacyWallet:"Client account access uses a private code. The owner keeps project status, referral invoice references and credit entries in private storage. Each client sees only their own status and applicable credit summary, not another client's name or invoice details.", termsWallet:"Credits are displayed only after the owner confirms an outside-site invoice. They are not cash, cannot be topped up or transferred on this website, and are applied manually to a later invoice. A shown credit does not by itself place an order or change an invoice." },
@@ -217,7 +234,7 @@ const CHATBOT_KEY = "chatbot:settings:v1";
 export async function getContent(): Promise<SiteContent> {
   const stored = await kvGet<Partial<SiteContent>>(CONTENT_KEY);
   if (!stored) return DEFAULT_CONTENT;
-  return { ...DEFAULT_CONTENT, ...stored, posts: stored.posts || DEFAULT_CONTENT.posts, faqs: stored.faqs || DEFAULT_CONTENT.faqs, testimonials: stored.testimonials || [], packages: stored.packages || DEFAULT_CONTENT.packages, demoUrl: stored.demoUrl || "", businessWhatsappUrl: stored.businessWhatsappUrl || "", announcement: stored.announcement || "", legal: { ...DEFAULT_CONTENT.legal, ...(stored.legal || {}) }, stackItems:Array.isArray(stored.stackItems)?stored.stackItems:DEFAULT_CONTENT.stackItems, resourceCards:Array.isArray(stored.resourceCards)?stored.resourceCards:DEFAULT_CONTENT.resourceCards, hero: { ...DEFAULT_CONTENT.hero, ...(stored.hero || {}) }, about: { ...DEFAULT_CONTENT.about, ...(stored.about || {}) } };
+  return { ...DEFAULT_CONTENT, ...stored, posts: stored.posts || DEFAULT_CONTENT.posts, faqs: stored.faqs || DEFAULT_CONTENT.faqs, testimonials: stored.testimonials || [], packages: stored.packages || DEFAULT_CONTENT.packages, demoUrl: stored.demoUrl || "", businessWhatsappUrl: stored.businessWhatsappUrl || "", announcement: stored.announcement || "", footer:{...DEFAULT_CONTENT.footer,...(stored.footer||{})}, pageCopy:{...DEFAULT_CONTENT.pageCopy,...(stored.pageCopy||{})}, legal: { ...DEFAULT_CONTENT.legal, ...(stored.legal || {}) }, stackItems:Array.isArray(stored.stackItems)?stored.stackItems:DEFAULT_CONTENT.stackItems, resourceCards:Array.isArray(stored.resourceCards)?stored.resourceCards:DEFAULT_CONTENT.resourceCards, hero: { ...DEFAULT_CONTENT.hero, ...(stored.hero || {}) }, about: { ...DEFAULT_CONTENT.about, ...(stored.about || {}) } };
 }
 
 export async function saveContent(content: SiteContent): Promise<boolean> {
