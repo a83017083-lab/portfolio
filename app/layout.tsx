@@ -29,6 +29,7 @@ export const metadata: Metadata = {
     "student web developer India", "AI automation for small business", "n8n automation developer",
     "affordable website developer Delhi", "AI chatbot for website",
   ],
+  icons: { icon: [{ url: "/favicon.ico", sizes: "any", type: "image/x-icon" }, { url: "/favicon-96.png", sizes: "96x96", type: "image/png" }], apple: "/apple-icon.png" },
   authors: [{ name: "Abhinav Kumar", url: SITE_URL }],
   creator: "Abhinav Kumar",
 
