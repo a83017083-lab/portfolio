@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export const dynamic = "force-static";
 
-const AGENTS = ["*", "GPTBot", "Google-Extended", "PerplexityBot", "ClaudeBot"];
+const AGENTS = ["*", "GPTBot", "OAI-SearchBot", "ChatGPT-User", "Google-Extended", "PerplexityBot", "ClaudeBot"];
 
 export default function robots(): MetadataRoute.Robots {
   return {
